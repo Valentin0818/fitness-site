@@ -1,11 +1,299 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>FitKnow · 健身知识库</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitKnow · 健身知识分类模板</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #11131a;
+      --card: #151826;
+      --muted: #99a1b3;
+      --text: #e9edf5;
+      --brand: #7aa2ff;
+      --brand-2: #58f5a5;
+      --ring: rgba(122,162,255,.4);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(88,245,165,.07), transparent 60%),
+                  radial-gradient(900px 600px at -10% 0%, rgba(122,162,255,.08), transparent 55%),
+                  var(--bg);
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+    header { position: sticky; top: 0; backdrop-filter: blur(8px); background: linear-gradient(180deg, rgba(11,12,16,.85), rgba(11,12,16,.55) 60%, transparent); z-index: 10; }
+    .nav { display:flex; align-items:center; justify-content:space-between; padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .brand { display:flex; align-items:center; gap: 12px; font-weight: 700; letter-spacing:.3px; }
+    .logo { width: 28px; height: 28px; border-radius:8px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 6px 16px rgba(122,162,255,.35), inset 0 0 18px rgba(88,245,165,.25); }
+    .brand small { color: var(--muted); font-weight: 500; }
+
+    .tools { display:grid; grid-template-columns: 1fr 170px 170px; gap: 12px; padding: 16px 20px; }
+    .search, .select { display:flex; align-items:center; gap:10px; background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow);
+    }
+    .search input { flex:1; background: transparent; border:0; color: var(--text); outline: none; font-size: 14px; }
+    .select select { flex:1; background: transparent; border:0; color: var(--text); outline: none; font-size: 14px; }
+
+    .chips { display:flex; flex-wrap:wrap; gap:8px; padding: 0 20px 14px; }
+    .chip { padding:6px 10px; border-radius:999px; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size: 12px; cursor: pointer; user-select: none; }
+    .chip.active { outline: 2px solid var(--ring); background: rgba(122,162,255,.12); }
+
+    .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .category { grid-column: span 6; background: linear-gradient(180deg, rgba(21,24,38,.8), rgba(21,24,38,.6)); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+    .category h2 { margin: 8px 0 6px; font-size: 18px; }
+    .category p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+
+    details { background: rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; }
+    summary { cursor: pointer; list-style: none; display:flex; align-items:center; justify-content:space-between; }
+    summary::-webkit-details-marker { display:none; }
+
+    .video { display:flex; gap: 12px; align-items:flex-start; padding: 10px 8px; border-radius: 10px; }
+    .video:hover { background: rgba(255,255,255,.04); }
+    .v-meta { flex: 1; }
+    .v-title { margin: 0; font-size: 15px; font-weight: 600; }
+    .v-sub { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .v-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top: 8px; }
+    .v-tag { font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); }
+
+    .footer { margin-top: 22px; display:flex; justify-content:space-between; align-items:center; color: var(--muted); font-size:12px; }
+
+    @media (max-width: 900px) {
+      .tools { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .category { grid-column: span 1; }
+    }
+
+    /* Small helper buttons */
+    .btn { background: linear-gradient(135deg, rgba(122,162,255,.18), rgba(88,245,165,.18)); border:1px solid rgba(255,255,255,.12); padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--text); cursor: pointer; }
+    .btn:hover { filter: brightness(1.05); }
+  </style>
 </head>
 <body>
-  <h1>FitKnow · 健身知识库</h1>
-  <p>这里是健身知识网站模板，请将完整的 index.html 模板替换到这里。</p>
+  <!--
+    使用说明（可删除）：
+    1) 修改下方 SITE_DATA 即可更换站点标题、分类与视频。
+    2) 每个视频至少包含 title 与 url。可选字段：duration（时长），level（难度：入门/进阶/高手），tags（数组），platform（如 YouTube/Bilibili）。
+    3) 顶部搜索会按分类名/视频标题/标签模糊过滤；右侧下拉可按难度过滤；点击上方“常用标签”可叠加筛选。
+    4) 复制此页面为 index.html 直接部署到任意静态空间即可（如 GitHub Pages、Vercel、Netlify）。
+  -->
+
+  <header>
+    <div class="nav container">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div id="siteTitle" style="font-size:16px;">FitKnow · 健身知识库</div>
+          <small>分类清晰 · 视频直达 · 可自行扩展</small>
+        </div>
+      </div>
+      <button class="btn" id="expandAll">展开全部</button>
+    </div>
+    <div class="tools container">
+      <label class="search" aria-label="搜索">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/></svg>
+        <input id="searchInput" placeholder="搜索分类、视频标题或标签…" />
+      </label>
+      <label class="select" aria-label="难度">
+        <span style="white-space:nowrap;color:var(--muted);">难度</span>
+        <select id="levelSelect">
+          <option value="">全部</option>
+          <option value="入门">入门</option>
+          <option value="进阶">进阶</option>
+          <option value="高手">高手</option>
+        </select>
+      </label>
+      <label class="select" aria-label="平台">
+        <span style="white-space:nowrap;color:var(--muted);">平台</span>
+        <select id="platformSelect">
+          <option value="">全部</option>
+          <option>YouTube</option>
+          <option>Bilibili</option>
+          <option>视频号</option>
+        </select>
+      </label>
+    </div>
+    <div class="chips container" id="tagChips"></div>
+  </header>
+
+  <main class="container">
+    <section id="categories" class="grid" aria-live="polite"></section>
+    <div class="footer">
+      <div>© <span id="year"></span> FitKnow Template · 纯静态，无需后端</div>
+      <a href="#top">回到顶部 ↑</a>
+    </div>
+  </main>
+
+  <script>
+    // ====== 数据区（修改这里即可自定义内容）======
+    const SITE_DATA = {
+      siteTitle: "FitKnow · 健身知识库",
+      commonTags: ["力量", "有氧", "增肌", "减脂", "灵活性", "核心", "康复", "营养", "HIIT"],
+      categories: [
+        {
+          id: "strength",
+          name: "力量训练",
+          description: "杠铃/哑铃/器械等基础与进阶力量技巧。",
+          videos: [
+            { title: "深蹲技术要点：从零到规范", url: "https://www.youtube.com/watch?v=1xMa4CP1fS0", duration: "12:08", level: "入门", tags: ["力量","下肢","基础"], platform: "YouTube" },
+            { title: "硬拉三种姿势全解析", url: "https://www.bilibili.com/video/BV1xS4y1A7mE", duration: "18:27", level: "进阶", tags: ["力量","后链","进阶"], platform: "Bilibili" },
+            { title: "卧推卡位与力量曲线", url: "https://www.youtube.com/watch?v=2Pj8wqv7i8Y", duration: "9:40", level: "进阶", tags: ["上肢","力量","胸"], platform: "YouTube" }
+          ]
+        },
+        {
+          id: "hypertrophy",
+          name: "增肌与编程",
+          description: "训练量、频率、渐进超负荷与动作选择。",
+          videos: [
+            { title: "新手如何做渐进：RPE 与训练日志", url: "https://www.youtube.com/watch?v=1PD4t-MmQMc", duration: "14:05", level: "入门", tags: ["增肌","RPE","基础"], platform: "YouTube" },
+            { title: "胸背肩一周如何安排？Push/Pull/Legs", url: "https://www.bilibili.com/video/BV1mG4y1A7qT", duration: "16:11", level: "进阶", tags: ["分化","计划","进阶"], platform: "Bilibili" }
+          ]
+        },
+        {
+          id: "cardio",
+          name: "有氧与减脂",
+          description: "心肺适能、脂代谢与HIIT实操。",
+          videos: [
+            { title: "20分钟居家HIIT（无器械）", url: "https://www.youtube.com/watch?v=ml6cT4AZdqI", duration: "20:00", level: "入门", tags: ["HIIT","减脂","居家"], platform: "YouTube" },
+            { title: "低强度稳态有氧（LISS）怎么做", url: "https://www.bilibili.com/video/BV1fK4y1M7qV", duration: "10:19", level: "入门", tags: ["有氧","LISS","减脂"], platform: "Bilibili" }
+          ]
+        },
+        {
+          id: "mobility",
+          name: "灵活性与康复",
+          description: "关节活动度、核心稳定与常见运动损伤预防。",
+          videos: [
+            { title: "久坐人群的髋关节打开", url: "https://www.youtube.com/watch?v=JE4gk6nG3Yc", duration: "11:52", level: "入门", tags: ["灵活性","髋","办公室"], platform: "YouTube" },
+            { title: "肩袖强化 6 动作", url: "https://www.bilibili.com/video/BV1yV411b7w4", duration: "8:45", level: "进阶", tags: ["康复","上肢","预防"], platform: "Bilibili" }
+          ]
+        },
+        {
+          id: "nutrition",
+          name: "营养与补剂",
+          description: "能量平衡、蛋白质摄入、围训练营养与基础补剂。",
+          videos: [
+            { title: "如何吃出热量缺口", url: "https://www.youtube.com/watch?v=2J3m5JmLk2Y", duration: "7:58", level: "入门", tags: ["营养","减脂","热量"], platform: "YouTube" },
+            { title: "肌酸的科学与用法", url: "https://www.bilibili.com/video/BV1mU4y1q7rM", duration: "9:20", level: "入门", tags: ["补剂","增肌","科学"], platform: "Bilibili" }
+          ]
+        }
+      ]
+    };
+
+    // ====== 组件渲染 ======
+    const qs = (sel, el=document) => el.querySelector(sel);
+    const qsa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    const state = { search: '', level: '', platform: '', tagFilters: new Set() };
+
+    function uniqueTags(data) {
+      const set = new Set([...(data.commonTags || [])]);
+      data.categories.forEach(c => c.videos.forEach(v => (v.tags||[]).forEach(t => set.add(t))));
+      return Array.from(set).slice(0, 24);
+    }
+
+    function matchFilters(video, category) {
+      const text = `${video.title} ${(video.tags||[]).join(' ')} ${category.name}`.toLowerCase();
+      const searchOk = !state.search || text.includes(state.search.toLowerCase());
+      const levelOk = !state.level || (video.level === state.level);
+      const platformOk = !state.platform || (video.platform === state.platform);
+      const tagsOk = state.tagFilters.size === 0 || (video.tags||[]).some(t => state.tagFilters.has(t));
+      return searchOk && levelOk && platformOk && tagsOk;
+    }
+
+    function renderChips(tags) {
+      const wrap = qs('#tagChips');
+      wrap.innerHTML = '';
+      tags.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = t;
+        btn.addEventListener('click', () => {
+          if (state.tagFilters.has(t)) state.tagFilters.delete(t); else state.tagFilters.add(t);
+          btn.classList.toggle('active');
+          renderCategories();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function renderCategories() {
+      const grid = qs('#categories');
+      grid.innerHTML = '';
+      SITE_DATA.categories.forEach(cat => {
+        // 过滤后的视频
+        const vids = cat.videos.filter(v => matchFilters(v, cat));
+        if (vids.length === 0) return;
+
+        const card = document.createElement('article');
+        card.className = 'category';
+        card.innerHTML = `
+          <h2>${cat.name}</h2>
+          <p>${cat.description || ''}</p>
+          <details open>
+            <summary>
+              <span>共 ${vids.length} 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"></div>
+          </details>
+        `;
+
+        const list = qs('.list', card);
+        vids.forEach(v => {
+          const item = document.createElement('div');
+          item.className = 'video';
+          const dur = v.duration ? ` · ${v.duration}` : '';
+          const lvl = v.level ? ` · ${v.level}` : '';
+          const plat = v.platform ? ` · ${v.platform}` : '';
+          item.innerHTML = `
+            <div class="v-meta">
+              <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+              <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+              <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+            </div>
+          `;
+          list.appendChild(item);
+        });
+        grid.appendChild(card);
+      });
+
+      if (!grid.children.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'grid-column:1/-1; text-align:center; padding:40px; color: var(--muted); border:1px dashed rgba(255,255,255,.15); border-radius: 16px;';
+        empty.textContent = '没有匹配的结果，试试更换搜索或筛选条件～';
+        grid.appendChild(empty);
+      }
+    }
+
+    function bindControls() {
+      qs('#siteTitle').textContent = SITE_DATA.siteTitle || '我的健身网站';
+      qs('#year').textContent = new Date().getFullYear();
+
+      qs('#searchInput').addEventListener('input', (e) => {
+        state.search = e.target.value.trim();
+        renderCategories();
+      });
+      qs('#levelSelect').addEventListener('change', (e) => { state.level = e.target.value; renderCategories(); });
+      qs('#platformSelect').addEventListener('change', (e) => { state.platform = e.target.value; renderCategories(); });
+
+      qs('#expandAll').addEventListener('click', () => {
+        qsa('details').forEach(d => d.open = true);
+      });
+    }
+
+    // 初始化
+    bindControls();
+    renderChips(uniqueTags(SITE_DATA));
+    renderCategories();
+  </script>
 </body>
 </html>
