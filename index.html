@@ -198,7 +198,8 @@
             { title: "详细的减脂饮食计划", url: " https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56 ", duration: "13:57", level: "入门", tags: ["控糖","碳水","减脂"], platform: "Bilibili" },
             { title: "不清楚蛋白质吃多少？", url: "https://www.bilibili.com/video/BV1F94y1o7uJ/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:15", level: "入门", tags: ["营养","蛋白质","增肌"], platform: "Bilibili" },
             { title: "控糖怎么控？", url: " http://xhslink.com/o/6JERD9IBZdS ", duration: "11:09", level: "入门", tags: ["控糖","碳水","减脂"], platform: "小红书" },
-            { title: "体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... ", url: "http://xhslink.com/o/7HZKpsMjRNB ", duration: "00:45", level: "入门", tags: ["体重","脂肪","减脂"], platform: "小红书" }
+            { title: "体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... ", url: "http://xhslink.com/o/7HZKpsMjRNB ", duration: "00:45", level: "入门", tags: ["体重","脂肪","减脂"], platform: "小红书" },
+            { title: "女性健身误区/根据生理时间安排训练", url: "https://www.bilibili.com/video/BV1s44y1q7vt/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "30:21", level: "进阶", tags: ["生理期","计划","增肌"], platform: "Bilibili" }
           ]
         }
       ]
@@ -246,22 +247,61 @@
       grid.innerHTML = '';
       SITE_DATA.categories.forEach(cat => {
         // 过滤后的视频
-        const vids = cat.videos.filter(v => matchFilters(v, cat));
-        if (vids.length === 0) return;
+        // 旧：vids.forEach(v => { … 生成 .video … });
+// 新：先分组，再渲染
+const grouped = vids.reduce((acc, v) => {
+  const g = v.group || "全部视频";
+  (acc[g] ||= []).push(v);
+  return acc;
+}, {});
 
-        const card = document.createElement('article');
-        card.className = 'category';
-        card.innerHTML = `
-          <h2>${cat.name}</h2>
-          <p>${cat.description || ''}</p>
-          <details open>
-            <summary>
-              <span>共 ${vids.length} 个视频</span>
-              <span aria-hidden="true">▼</span>
-            </summary>
-            <div class="list"></div>
-          </details>
-        `;
+// 如果只有一个“全部视频”分组，就按原样渲染；否则渲染二级折叠
+const groupNames = Object.keys(grouped);
+if (groupNames.length === 1 && groupNames[0] === "全部视频") {
+  grouped["全部视频"].forEach(v => {
+    const item = document.createElement('div');
+    item.className = 'video';
+    const dur = v.duration ? ` · ${v.duration}` : '';
+    const lvl = v.level ? ` · ${v.level}` : '';
+    const plat = v.platform ? ` · ${v.platform}` : '';
+    item.innerHTML = `
+      <div class="v-meta">
+        <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+        <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+        <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+} else {
+  // 为每个分组生成一个二级 <details>
+  groupNames.forEach(gName => {
+    const dv = document.createElement('details');
+    dv.open = (gName === "肩部"); // 想默认展开哪个分组可在这里改
+    dv.innerHTML = `
+      <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
+      <div class="sublist"></div>
+    `;
+    const sub = dv.querySelector('.sublist');
+    grouped[gName].forEach(v => {
+      const item = document.createElement('div');
+      item.className = 'video';
+      const dur = v.duration ? ` · ${v.duration}` : '';
+      const lvl = v.level ? ` · ${v.level}` : '';
+      const plat = v.platform ? ` · ${v.platform}` : '';
+      item.innerHTML = `
+        <div class="v-meta">
+          <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+          <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+          <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+        </div>
+      `;
+      sub.appendChild(item);
+    });
+    list.appendChild(dv);
+  });
+}
+
 
         const list = qs('.list', card);
         vids.forEach(v => {
