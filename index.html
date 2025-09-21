@@ -160,11 +160,11 @@
           name: "力量训练",
           description: "杠铃/哑铃/器械等基础与进阶力量技巧。",
           videos: [
-            { title: "保姆级深蹲姿势详解", url: "https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:44", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili" },
+            { title: "保姆级深蹲姿势详解", url: "https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:44", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group:"下肢" },
             { title: "普通人如何学会一个标准的深蹲？", url: "https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "09:33", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili" },
             { title: "背部训练", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:37", level: "进阶", tags: ["上肢","力量","背"], platform: "Bilibili" },
-            { title: "肩部训练教学", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:20", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili" },
-            { title: "简单肩部训练流程", url: "https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:55", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili" },
+            { title: "肩部训练教学", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:20", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group:"肩部" },
+            { title: "简单肩部训练流程", url: "https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:55", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group:"肩部" },
             { title: "简单胸部训练教学", url: "https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:45", level: "进阶", tags: ["上肢","力量","胸"], platform: "Bilibili" }
           ]
         },
@@ -280,7 +280,67 @@
         
 
         const list = qs('.list', card);
-        vids.forEach(v => {
+        const list = qs('.list', card);
+
+        // 先按 group 分组；未标注 group 的归到 “全部视频”
+        const grouped = vids.reduce((acc, v) => {
+          const g = v.group || "全部视频";
+          (acc[g] ||= []).push(v);
+          return acc;
+        }, {});
+        
+        const groupNames = Object.keys(grouped);
+        
+        // 如果没有任何分组标注，就按原来单列表渲染
+        if (groupNames.length === 1 && groupNames[0] === "全部视频") {
+          grouped["全部视频"].forEach(v => {
+            const item = document.createElement('div');
+            item.className = 'video';
+            const dur = v.duration ? ` · ${v.duration}` : '';
+            const lvl = v.level ? ` · ${v.level}` : '';
+            const plat = v.platform ? ` · ${v.platform}` : '';
+            item.innerHTML = `
+              <div class="v-meta">
+                <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+                <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+                <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+              </div>
+            `;
+            list.appendChild(item);
+          });
+        } else {
+          // 有分组：为每个 group 生成一个内层 <details>
+          groupNames.forEach(gName => {
+            const dv = document.createElement('details');
+            dv.open = false; // 想默认展开某组可改成 gName === "肩部"
+            dv.innerHTML = `
+              <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
+              <div class="sublist"></div>
+            `;
+            const sub = dv.querySelector('.sublist');
+        
+            grouped[gName].forEach(v => {
+              const item = document.createElement('div');
+              item.className = 'video';
+              const dur = v.duration ? ` · ${v.duration}` : '';
+              const lvl = v.level ? ` · ${v.level}` : '';
+              const plat = v.platform ? ` · ${v.platform}` : '';
+              item.innerHTML = `
+                <div class="v-meta">
+                  <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+                  <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+                  <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+                </div>
+              `;
+              sub.appendChild(item);
+            });
+        
+            list.appendChild(dv);
+          });
+        }
+        
+        grid.appendChild(card);
+       // vids.forEach(v => {
           const item = document.createElement('div');
           item.className = 'video';
           const dur = v.duration ? ` · ${v.duration}` : '';
@@ -295,7 +355,7 @@
           `;
           list.appendChild(item);
         });
-        grid.appendChild(card);
+        grid.appendChild(card);//
       });
 
       if (!grid.children.length) {
