@@ -249,6 +249,8 @@
         // 过滤后的视频
         // 旧：vids.forEach(v => { … 生成 .video … });
         // 新：先分组，再渲染
+        // 旧：vids.forEach(v => { … 生成 .video … });
+        // 新：先分组，再渲染
         const grouped = vids.reduce((acc, v) => {
           const g = v.group || "全部视频";
           (acc[g] ||= []).push(v);
@@ -256,34 +258,9 @@
         }, {});
         
         // 如果只有一个“全部视频”分组，就按原样渲染；否则渲染二级折叠
-      const groupNames = Object.keys(grouped);
-      if (groupNames.length === 1 && groupNames[0] === "全部视频") {
-        grouped["全部视频"].forEach(v => {
-          const item = document.createElement('div');
-          item.className = 'video';
-          const dur = v.duration ? ` · ${v.duration}` : '';
-          const lvl = v.level ? ` · ${v.level}` : '';
-          const plat = v.platform ? ` · ${v.platform}` : '';
-          item.innerHTML = `
-            <div class="v-meta">
-              <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
-              <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
-              <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
-            </div>
-          `;
-          list.appendChild(item);
-        });
-      } else {
-        // 为每个分组生成一个二级 <details>
-        groupNames.forEach(gName => {
-          const dv = document.createElement('details');
-          dv.open = (gName === "肩部"); // 想默认展开哪个分组可在这里改
-          dv.innerHTML = `
-            <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
-            <div class="sublist"></div>
-          `;
-          const sub = dv.querySelector('.sublist');
-          grouped[gName].forEach(v => {
+        const groupNames = Object.keys(grouped);
+        if (groupNames.length === 1 && groupNames[0] === "全部视频") {
+          grouped["全部视频"].forEach(v => {
             const item = document.createElement('div');
             item.className = 'video';
             const dur = v.duration ? ` · ${v.duration}` : '';
@@ -296,12 +273,38 @@
                 <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
               </div>
             `;
-            sub.appendChild(item);
+            list.appendChild(item);
           });
-          list.appendChild(dv);
-        });
-      }
+        } else {
+          // 为每个分组生成一个二级 <details>
+          groupNames.forEach(gName => {
+            const dv = document.createElement('details');
+            dv.open = (gName === "肩部"); // 想默认展开哪个分组可在这里改
+            dv.innerHTML = `
+              <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
+              <div class="sublist"></div>
+            `;
+            const sub = dv.querySelector('.sublist');
+            grouped[gName].forEach(v => {
+              const item = document.createElement('div');
+              item.className = 'video';
+              const dur = v.duration ? ` · ${v.duration}` : '';
+              const lvl = v.level ? ` · ${v.level}` : '';
+              const plat = v.platform ? ` · ${v.platform}` : '';
+              item.innerHTML = `
+                <div class="v-meta">
+                  <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+                  <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+                  <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+                </div>
+              `;
+              sub.appendChild(item);
+            });
+            list.appendChild(dv);
+          });
+        }
 
+        
 
         const list = qs('.list', card);
         vids.forEach(v => {
