@@ -1,38 +1,4 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -73,14 +39,14 @@
     .brand small { color: var(--muted); font-weight: 500; }
 
     .tools { display:grid; grid-template-columns: 1fr 170px 170px; gap: 12px; padding: 16px 20px; }
-    .search, .select { display:flex; align-items:center; gap:10px; background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow);
-    }
+    .search, .select { display:flex; align-items:center; gap:10px; background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow); }
+    /* 改为不透明的输入背景 */
     .search input { flex:1; background: #000; border:0; color: var(--text); outline: none; font-size: 14px; }
     .select select { flex:1; background: #000; border:0; color: var(--text); outline: none; font-size: 14px; }
 
     .chips { display:flex; flex-wrap:wrap; gap:8px; padding: 0 20px 14px; }
-    .chip { padding:6px 10px; border-radius:999px; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size: 12px; cursor: pointer; user-select: none; color: #ffffff; }
-    .chip.active { outline: 2px solid var(--ring); background: rgba(122,162,255,.12); color: #ffffff; }
+    .chip { padding:6px 10px; border-radius:999px; background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); font-size: 12px; cursor: pointer; user-select: none; color: #ffffff; }
+    .chip.active { outline: 2px solid var(--ring); background: rgba(122,162,255,.25); color: #ffffff; }
 
     .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
     .category { grid-column: span 6; background: linear-gradient(180deg, rgba(21,24,38,.8), rgba(21,24,38,.6)); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
@@ -110,15 +76,17 @@
     /* Small helper buttons */
     .btn { background: linear-gradient(135deg, rgba(122,162,255,.18), rgba(88,245,165,.18)); border:1px solid rgba(255,255,255,.12); padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--text); cursor: pointer; }
     .btn:hover { filter: brightness(1.05); }
+
+    /* 二级折叠微样式 */
+    details > summary { cursor: pointer; padding: 6px 0; }
+    .sublist { padding-top: 6px; }
   </style>
 </head>
 <body>
-  <!--
-    使用说明（可删除）：
-    1) 修改下方 SITE_DATA 即可更换站点标题、分类与视频。
-    2) 每个视频至少包含 title 与 url。可选字段：duration（时长），level（难度：入门/进阶/高手），tags（数组），platform（如 YouTube/Bilibili）。
-    3) 顶部搜索会按分类名/视频标题/标签模糊过滤；右侧下拉可按难度过滤；点击上方“常用标签”可叠加筛选。
-    4) 复制此页面为 index.html 直接部署到任意静态空间即可（如 GitHub Pages、Vercel、Netlify）。
+  <!-- 使用说明（可删除）：
+    1) 修改下方 SITE_DATA 即可更换站点标题、分类与视频；若需要二级折叠，请给视频加 group 字段（如 "肩部"）。
+    2) 顶部搜索按分类/标题/标签模糊过滤；右侧下拉可按难度、平台筛选；点击“常用标签”可叠加筛选。
+    3) 复制此页面为 index.html 部署到 GitHub Pages / Vercel / Netlify 即可。
   -->
 
   <header>
@@ -127,7 +95,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <div id="siteTitle" style="font-size:16px;">FitKnow · 健身知识库</div>
-          <small>✏️ · 🏋️‍♀️ · 💪</small>
+          <small>📖✏️ · 🏋️‍♀️ · 💪</small>
         </div>
       </div>
       <button class="btn" id="expandAll">展开全部</button>
@@ -152,7 +120,6 @@
           <option value="">全部</option>
           <option>小红书</option>
           <option>Bilibili</option>
-      
         </select>
       </label>
     </div>
@@ -187,22 +154,19 @@
             { title: "《健身新手的训练完全手册》", url: "https://www.bilibili.com/video/BV1Hk4y187jF/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "56:34", level: "进阶", tags: ["框架","计划","进阶"], platform: "Bilibili" }
           ]
         },
-        
-        
         {
           id: "strength",
           name: "力量训练",
           description: "杠铃/哑铃/器械等基础与进阶力量技巧。",
           videos: [
-            { title: "保姆级深蹲姿势详解", url: "https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:44", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili" },
-            { title: "普通人如何学会一个标准的深蹲？", url: "https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "09:33", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili" },
-            { title: "背部训练", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:37", level: "进阶", tags: ["上肢","力量","背"], platform: "Bilibili" },
-            { title: "肩部训练教学", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:20", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili" },
-            { title: "简单肩部训练流程", url: "https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:55", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili"},
-            { title: "简单胸部训练教学", url: "https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:45", level: "进阶", tags: ["上肢","力量","胸"], platform: "Bilibili" }
+            { title: "保姆级深蹲姿势详解", url: "https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:44", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
+            { title: "普通人如何学会一个标准的深蹲？", url: "https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "09:33", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
+            { title: "背部训练", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:37", level: "进阶", tags: ["上肢","力量","背"], platform: "Bilibili", group: "背部" },
+            { title: "肩部训练教学", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:20", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部" },
+            { title: "简单肩部训练流程", url: "https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:55", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部"},
+            { title: "简单胸部训练教学", url: "https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:45", level: "进阶", tags: ["上肢","力量","胸"], platform: "Bilibili", group: "胸部" }
           ]
         },
-        
         {
           id: "cardio",
           name: "有氧与减脂",
@@ -229,10 +193,9 @@
           name: "营养与补剂",
           description: "能量平衡、蛋白质摄入、围训练营养与基础补剂。",
           videos: [
-            { title: "详细的减脂饮食计划", url: " https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56 ", duration: "13:57", level: "入门", tags: ["控糖","碳水","减脂"], platform: "Bilibili" },
+            { title: "详细的减脂饮食计划", url: "https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "13:57", level: "入门", tags: ["控糖","碳水","减脂"], platform: "Bilibili" },
             { title: "不清楚蛋白质吃多少？", url: "https://www.bilibili.com/video/BV1F94y1o7uJ/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:15", level: "入门", tags: ["营养","蛋白质","增肌"], platform: "Bilibili" },
-            { title: "控糖怎么控？", url: " http://xhslink.com/o/6JERD9IBZdS ", duration: "11:09", level: "入门", tags: ["控糖","碳水","减脂"], platform: "小红书" }
-            
+            { title: "控糖怎么控？", url: "http://xhslink.com/o/6JERD9IBZdS", duration: "11:09", level: "入门", tags: ["控糖","碳水","减脂"], platform: "小红书" }
           ]
         },
         {
@@ -240,13 +203,10 @@
           name: "相关知识",
           description: "生物学底层逻辑、自身个体认知。",
           videos: [
-          
-            { title: "体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... ", url: "http://xhslink.com/o/7HZKpsMjRNB ", duration: "00:45", level: "入门", tags: ["体重","脂肪","减脂"], platform: "小红书" },
+            { title: "体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... ", url: "http://xhslink.com/o/7HZKpsMjRNB", duration: "00:45", level: "入门", tags: ["体重","脂肪","减脂"], platform: "小红书" },
             { title: "女性健身误区/根据生理时间安排训练", url: "https://www.bilibili.com/video/BV1s44y1q7vt/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "30:21", level: "进阶", tags: ["生理期","计划","增肌"], platform: "Bilibili" }
-          
-          
           ]
-        },
+        }
       ]
     };
 
@@ -291,45 +251,53 @@
       const grid = qs('#categories');
       grid.innerHTML = '';
       SITE_DATA.categories.forEach(cat => {
-        // 过滤后的视频
-      
         const vids = cat.videos.filter(v => matchFilters(v, cat));
         if (vids.length === 0) return;
-        
-        
+
         const card = document.createElement('article');
         card.className = 'category';
         card.innerHTML = `
-        <h2>${cat.name}</h2>
-        <p>${cat.description || ''}</p>
-        <details open>
-        <summary>
-        <span>共 ${vids.length} 个视频</span>
-        <span aria-hidden="true">▼</span>
-        </summary>
-        <div class="list"></div>
-        </details>
+          <h2>${cat.name}</h2>
+          <p>${cat.description || ''}</p>
+          <details open>
+            <summary>
+              <span>共 ${vids.length} 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"></div>
+          </details>
         `;
 
-        
-
         const list = qs('.list', card);
-        
-         vids.forEach(v => {
-          const item = document.createElement('div');
-          item.className = 'video';
-          const dur = v.duration ? ` · ${v.duration}` : '';
-          const lvl = v.level ? ` · ${v.level}` : '';
-          const plat = v.platform ? ` · ${v.platform}` : '';
-          item.innerHTML = `
-            <div class="v-meta">
-              <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
-              <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
-              <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
-            </div>
-          `;
-          list.appendChild(item);
-        });
+
+        // ====== 新增：按 group 分组并渲染二级折叠 ======
+        const grouped = vids.reduce((acc, v) => {
+          const g = v.group || "全部视频";
+          (acc[g] ||= []).push(v);
+          return acc;
+        }, {});
+
+        const groupNames = Object.keys(grouped);
+
+        if (groupNames.length === 1 && groupNames[0] === "全部视频") {
+          // 无分组：按原样渲染
+          grouped["全部视频"].forEach(v => list.appendChild(renderVideoItem(v, cat)));
+        } else {
+          // 有分组：渲染内层 <details>
+          groupNames.forEach(gName => {
+            const dv = document.createElement('details');
+            dv.open = false; // 想默认展开某组可改成：gName === "肩部"
+            dv.innerHTML = `
+              <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
+              <div class="sublist"></div>
+            `;
+            const sub = dv.querySelector('.sublist');
+            grouped[gName].forEach(v => sub.appendChild(renderVideoItem(v, cat)));
+            list.appendChild(dv);
+          });
+        }
+        // ====== 分组渲染结束 ======
+
         grid.appendChild(card);
       });
 
@@ -339,6 +307,23 @@
         empty.textContent = '没有匹配的结果，试试更换搜索或筛选条件～';
         grid.appendChild(empty);
       }
+    }
+
+    // 渲染单个视频项（复用原有结构）
+    function renderVideoItem(v, cat) {
+      const item = document.createElement('div');
+      item.className = 'video';
+      const dur = v.duration ? ` · ${v.duration}` : '';
+      const lvl = v.level ? ` · ${v.level}` : '';
+      const plat = v.platform ? ` · ${v.platform}` : '';
+      item.innerHTML = `
+        <div class="v-meta">
+          <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+          <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+          <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+        </div>
+      `;
+      return item;
     }
 
     function bindControls() {
@@ -363,5 +348,38 @@
     renderCategories();
   </script>
 </body>
-</html>//
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
