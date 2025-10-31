@@ -1,670 +1,672 @@
-+<!DOCTYPE html>
-+<html lang="zh-CN">
-+<head>
-+  <meta charset="UTF-8">
-+  <meta name="viewport" content="width=device-width, initial-scale=1">
-+  <title>FitKnow · 健身知识分类模板</title>
-+  <style>
-+    :root {
-+      --bg: #0b0c10;
-+      --panel: #11131a;
-+      --card: #151826;
-+      --muted: #99a1b3;
-+      --text: #e9edf5;
-+      --brand: #7aa2ff;
-+      --brand-2: #58f5a5;
-+      --ring: rgba(122,162,255,.4);
-+      --shadow: 0 10px 30px rgba(0,0,0,.35);
-+      --radius: 16px;
-+    }
-+    *, *::before, *::after { box-sizing: border-box; }
-+    html, body { height: 100%; }
-+    body {
-+      margin: 0;
-+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK", "Microsoft YaHei", sans-serif;
-+      color: var(--text);
-+      background: radial-gradient(1200px 800px at 80% -10%, rgba(88,245,165,.07), transparent 60%),
-+                  radial-gradient(900px 600px at -10% 0%, rgba(122,162,255,.08), transparent 55%),
-+                  var(--bg);
-+    }
-+    a { color: var(--brand); text-decoration: none; }
-+    a:hover { text-decoration: underline; }
-+
-+    /* Layout */
-+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
-+    header { position: sticky; top: 0; backdrop-filter: blur(8px); background: linear-gradient(180deg, rgba(11,12,16,.85), rgba(11,12,16,.55) 60%, transparent); z-index: 10; }
-+    .nav { display:flex; align-items:center; justify-content:space-between; padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
-+    .brand { display:flex; align-items:center; gap: 12px; font-weight: 700; letter-spacing:.3px; }
-+    .logo { width: 28px; height: 28px; border-radius:8px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 6px 16px rgba(122,162,255,.35), inset 0 0 18px rgba(88,245,165,.25); }
-+    .brand small { color: var(--muted); font-weight: 500; }
-+
-+    .tools { display:grid; grid-template-columns: 1fr 170px 170px; gap: 12px; padding: 16px 20px; }
-+    .search, .select { display:flex; align-items:center; gap:10px; background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow); }
-+    /* 改为不透明的输入背景 */
-+    .search input { flex:1; background: #000; border:0; color: var(--text); outline: none; font-size: 14px; }
-+    .select select { flex:1; background: #000; border:0; color: var(--text); outline: none; font-size: 14px; }
-+
-+    .chips { display:flex; flex-wrap:wrap; gap:8px; padding: 0 20px 14px; }
-+    .chip { padding:6px 10px; border-radius:999px; background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); font-size: 12px; cursor: pointer; user-select: none; color: #ffffff; }
-+    .chip.active { outline: 2px solid var(--ring); background: rgba(122,162,255,.25); color: #ffffff; }
-+
-+    .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
-+    .category { grid-column: span 6; background: linear-gradient(180deg, rgba(21,24,38,.8), rgba(21,24,38,.6)); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
-+    .category h2 { margin: 8px 0 6px; font-size: 18px; }
-+    .category p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
-+
-+    details { background: rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; }
-+    summary { cursor: pointer; list-style: none; display:flex; align-items:center; justify-content:space-between; }
-+    summary::-webkit-details-marker { display:none; }
-+
-+    .video { display:flex; gap: 12px; align-items:flex-start; padding: 10px 8px; border-radius: 10px; }
-+    .video:hover { background: rgba(255,255,255,.04); }
-+    .v-meta { flex: 1; }
-+    .v-title { margin: 0; font-size: 15px; font-weight: 600; }
-+    .v-sub { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-+    .v-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top: 8px; }
-+    .v-tag { font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); }
-+
-+    .footer { margin-top: 22px; display:flex; justify-content:space-between; align-items:center; color: var(--muted); font-size:12px; }
-+
-+    @media (max-width: 900px) {
-+      .tools { grid-template-columns: 1fr; }
-+      .grid { grid-template-columns: 1fr; }
-+      .category { grid-column: span 1; }
-+    }
-+
-+    /* Small helper buttons */
-+    .btn { background: linear-gradient(135deg, rgba(122,162,255,.18), rgba(88,245,165,.18)); border:1px solid rgba(255,255,255,.12); padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--text); cursor: pointer; }
-+    .btn:hover { filter: brightness(1.05); }
-+
-+    /* 二级折叠微样式 */
-+    details > summary { cursor: pointer; padding: 6px 0; }
-+    .sublist { padding-top: 6px; }
-+
-+    /* 扩展区域容器 */
-+    #extensions { padding: 0 20px 80px; }
-+  </style>
-+</head>
-+<body>
-+  <!-- 使用说明（可删除）：
-+    1) 修改下方 SITE_DATA 即可更换站点标题、分类与视频；若需要二级折叠，请给视频加 group 字段（如 "肩部"）。
-+    2) 顶部搜索按分类/标题/标签模糊过滤；右侧下拉可按难度、平台筛选；点击“常用标签”可叠加筛选。
-+    3) 复制此页面为 index.html 部署到 GitHub Pages / Vercel / Netlify 即可。
-+  -->
-+
-+  <header>
-+    <div class="nav container">
-+      <div class="brand">
-+        <div class="logo" aria-hidden="true"></div>
-+        <div>
-+          <div id="siteTitle" style="font-size:16px;">FitKnow · 健身知识库</div>
-+          <small> ✏️ · 🏋️‍♀️ · 💪</small>
-+        </div>
-+      </div>
-+      <button class="btn" id="expandAll">展开全部</button>
-+    </div>
-+    <div class="tools container">
-+      <label class="search" aria-label="搜索">
-+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"></circle></svg>
-+        <input id="searchInput" placeholder="搜索分类、视频标题或标签…">
-+      </label>
-+      <label class="select" aria-label="难度">
-+        <span style="white-space:nowrap;color:var(--muted);">难度</span>
-+        <select id="levelSelect">
-+          <option value="">全部</option>
-+          <option value="入门">入门</option>
-+          <option value="进阶">进阶</option>
-+          <option value="高手">高手</option>
-+        </select>
-+      </label>
-+      <label class="select" aria-label="平台">
-+        <span style="white-space:nowrap;color:var(--muted);">平台</span>
-+        <select id="platformSelect">
-+          <option value="">全部</option>
-+          <option>小红书</option>
-+          <option>Bilibili</option>
-+        </select>
-+      </label>
-+    </div>
-+    <div class="chips container" id="tagChips"><button class="chip">力量</button><button class="chip">有氧</button><button class="chip">增肌</button><button class="chip">减脂</button><button class="chip">灵活性</button><button class="chip">核心</button><button class="chip">康复</button><button class="chip">营养</button><button class="chip">HIIT</button><button class="chip">新手</button><button class="chip">肌肉</button><button class="chip">基础</button><button class="chip">RPE</button><button class="chip">器械</button><button class="chip">动作</button><button class="chip">徒手</button><button class="chip">全身</button><button class="chip">居家</button><button class="chip">分化</button><button class="chip">计划</button><button class="chip">进阶</button><button class="chip">框架</button><button class="chip">下肢</button><button class="chip">上肢</button></div>
-+  </header>
-+
-+  <main class="container">
-+    <section id="categories" class="grid" aria-live="polite"><article class="category">
-+          <h2>新手了解</h2>
-+          <p>养成运动习惯；提高身体素质和运动能力；熟悉动作模式。</p>
-+          <details open="">
-+            <summary>
-+              <span>共 9 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1854y1C7ab?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【卓叔】新手训练扫盲01：认识全身肌肉</a></p>
-+          <p class="v-sub">新手了解 · 10:45 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">新手</span><span class="v-tag">肌肉</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1cA411j7oc/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【新手健身计划】一进健身房该怎么练？</a></p>
-+          <p class="v-sub">新手了解 · 11:15 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">增肌</span><span class="v-tag">RPE</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV184421Q7Kc/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【新手健身计划】一器械认识？</a></p>
-+          <p class="v-sub">新手了解 · 12:17 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">增肌</span><span class="v-tag">RPE</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div>
-+      <div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1nt421L7mn?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">健身房指南【10个新手必练动作纠错】</a></p>
-+          <p class="v-sub">新手了解 · 05:16 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">器械</span><span class="v-tag">动作</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1HU4y127eg/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">30分钟徒手全身力量无氧训练Push/Pull/Legs</a></p>
-+          <p class="v-sub">新手了解 · 29:38 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">徒手</span><span class="v-tag">全身</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1s94y1U7sB/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">健身入門｜10分鐘新手核心訓練 女生健身重訓</a></p>
-+          <p class="v-sub">新手了解 · 08:23 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">徒手</span><span class="v-tag">全身</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1mG4y1A7qT" target="_blank" rel="noopener">胸背肩一周如何安排？Push/Pull/Legs</a></p>
-+          <p class="v-sub">新手了解 · 16:11 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">分化</span><span class="v-tag">计划</span><span class="v-tag">进阶</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1NP411a7Ju?spm_id_from=333.788.recommend_more_video.1&amp;trackid=web_related_0.router-related-2206146-5nk2d.1761773134511.333&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">健身房入门训练计划，一周四练合集</a></p>
-+          <p class="v-sub">新手了解 · 13:03 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">分化</span><span class="v-tag">计划</span><span class="v-tag">进阶</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1Hk4y187jF/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">《健身新手的训练完全手册》</a></p>
-+          <p class="v-sub">新手了解 · 56:34 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">框架</span><span class="v-tag">计划</span><span class="v-tag">进阶</span></div>
-+        </div>
-+      </div></div>
-+          </details>
-+        </article><article class="category">
-+          <h2>力量训练</h2>
-+          <p>杠铃/哑铃/器械等基础与进阶力量技巧。</p>
-+          <details open="">
-+            <summary>
-+              <span>共 11 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"><details>
-+              <summary><strong>下肢</strong>（3）</summary>
-+              <div class="sublist"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">保姆级深蹲姿势详解</a></p>
-+          <p class="v-sub">力量训练 · 05:44 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">力量</span><span class="v-tag">下肢</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">普通人如何学会一个标准的深蹲？</a></p>
-+          <p class="v-sub">力量训练 · 09:33 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">力量</span><span class="v-tag">下肢</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1Fw4m127ri?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">臀腿训练</a></p>
-+          <p class="v-sub">力量训练 · 03:13 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">力量</span><span class="v-tag">下肢</span><span class="v-tag">基础</span></div>
-+        </div>
-+      </div></div>
-+            </details><details>
-+              <summary><strong>背部</strong>（2）</summary>
-+              <div class="sublist"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">背部训练</a></p>
-+          <p class="v-sub">力量训练 · 04:37 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">背</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/1PpbuTcMwId" target="_blank" rel="noopener">高位下拉</a></p>
-+          <p class="v-sub">力量训练 · 02:04 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">背</span></div>
-+        </div>
-+      </div></div>
-+            </details><details>
-+              <summary><strong>肩部</strong>（5）</summary>
-+              <div class="sublist"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/65vmx1PTGoz" target="_blank" rel="noopener">直角肩必练动作，哑铃侧平举动作简介</a></p>
-+          <p class="v-sub">力量训练 · 00:18 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">肩部训练教学</a></p>
-+          <p class="v-sub">力量训练 · 04:20 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1nD421J77T?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">胸肩训练教学</a></p>
-+          <p class="v-sub">力量训练 · 02:59 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">简单肩部训练流程</a></p>
-+          <p class="v-sub">力量训练 · 02:55 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1fyugzvEvV?spm_id_from=333.788.recommend_more_video.-1&amp;trackid=web_related_0.router-related-2206146-wxmlq.1761774038673.447&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">紧致胸肩背+修长手臂</a></p>
-+          <p class="v-sub">力量训练 · 04:02 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
-+        </div>
-+      </div></div>
-+            </details><details>
-+              <summary><strong>胸部</strong>（1）</summary>
-+              <div class="sublist"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">简单胸部训练教学</a></p>
-+          <p class="v-sub">力量训练 · 02:45 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">胸</span></div>
-+        </div>
-+      </div></div>
-+            </details></div>
-+          </details>
-+        </article><article class="category">
-+          <h2>有氧与减脂</h2>
-+          <p>心肺适能、脂代谢与HIIT实操。</p>
-+          <details open="">
-+            <summary>
-+              <span>共 3 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1T54y1v7op?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">有氧应该这样做！不伤膝盖、高效瘦身</a></p>
-+          <p class="v-sub">有氧与减脂 · 06:59 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">HIIT</span><span class="v-tag">减脂</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1R3411A7g4/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">帕梅拉 - 10分钟暴汗有氧</a></p>
-+          <p class="v-sub">有氧与减脂 · 11:27 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">HIIT</span><span class="v-tag">帕梅拉</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1sA411Q7R3/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">30分钟全程站立有氧燃脂操｜无跳跃 无深蹲 膝友好</a></p>
-+          <p class="v-sub">有氧与减脂 · 31:26 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">有氧</span><span class="v-tag">站立</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div></div>
-+          </details>
-+        </article><article class="category">
-+          <h2>灵活性与康复</h2>
-+          <p>关节活动度、核心稳定与常见运动损伤预防。</p>
-+          <details open="">
-+            <summary>
-+              <span>共 7 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1xi421v7xH/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">15分钟每日日常身体灵活性&amp;关节活动练习</a></p>
-+          <p class="v-sub">灵活性与康复 · 11:52 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">全身</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1aQ4y1u7Lo/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">髋关节功能提高训练详解</a></p>
-+          <p class="v-sub">灵活性与康复 · 06:57 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">髋</span><span class="v-tag">热身</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/2f5chdV7u72" target="_blank" rel="noopener">臀腿拉伸合集</a></p>
-+          <p class="v-sub">灵活性与康复 · 00:25 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">拉伸</span><span class="v-tag">臀</span><span class="v-tag">腿</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://search.bilibili.com/all?vt=38026073&amp;keyword=%E8%82%A9%E5%85%B3%E8%8A%82%E7%81%B5%E6%B4%BB%E6%80%A7%E8%AE%AD%E7%BB%83&amp;from_source=webtop_search&amp;spm_id_from=333.40164&amp;search_source=3" target="_blank" rel="noopener">5分钟肩关节激活+热身</a></p>
-+          <p class="v-sub">灵活性与康复 · 04:41 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">肩</span><span class="v-tag">热身</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1Q9p1zpEuw?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【假胯宽】10分钟跟练：髋 膝 踝 都得练</a></p>
-+          <p class="v-sub">灵活性与康复 · 10:16 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">体态</span><span class="v-tag">髋</span><span class="v-tag">膝踝</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1x7wveKEKH?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">臀凹陷【跟练】开髋收窄骨盆，填补臀凹陷</a></p>
-+          <p class="v-sub">灵活性与康复 · 19:42 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">体态</span><span class="v-tag">臀</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1sRGEzrEMz/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">15 分钟脊柱灵活性训练</a></p>
-+          <p class="v-sub">灵活性与康复 · 15:25 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">脊柱</span><span class="v-tag">居家</span></div>
-+        </div>
-+      </div></div>
-+          </details>
-+        </article><article class="category">
-+          <h2>营养与补剂</h2>
-+          <p>能量平衡、蛋白质摄入、围训练营养与基础补剂。</p>
-+          <details open="">
-+            <summary>
-+              <span>共 3 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">详细的减脂饮食计划</a></p>
-+          <p class="v-sub">营养与补剂 · 13:57 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">控糖</span><span class="v-tag">碳水</span><span class="v-tag">减脂</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1F94y1o7uJ/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">不清楚蛋白质吃多少？</a></p>
-+          <p class="v-sub">营养与补剂 · 04:15 · 入门 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">营养</span><span class="v-tag">蛋白质</span><span class="v-tag">增肌</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/6JERD9IBZdS" target="_blank" rel="noopener">控糖怎么控？</a></p>
-+          <p class="v-sub">营养与补剂 · 11:09 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">控糖</span><span class="v-tag">碳水</span><span class="v-tag">减脂</span></div>
-+        </div>
-+      </div></div>
-+          </details>
-+        </article><article class="category">
-+          <h2>相关知识</h2>
-+          <p>生物学底层逻辑、自身个体认知。</p>
-+          <details open="">
-+            <summary>
-+              <span>共 4 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/7HZKpsMjRNB" target="_blank" rel="noopener">体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... </a></p>
-+          <p class="v-sub">相关知识 · 00:45 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">体重</span><span class="v-tag">脂肪</span><span class="v-tag">减脂</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/707FAqOxPcS" target="_blank" rel="noopener">两个动作解决90%的代偿问题 </a></p>
-+          <p class="v-sub">相关知识 · 00:00 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">代偿</span><span class="v-tag">姿势</span><span class="v-tag">体态</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="http://xhslink.com/o/4g7u3HDdqbU" target="_blank" rel="noopener">自用收藏｜健身发力感tips </a></p>
-+          <p class="v-sub">相关知识 · 00:00 · 入门 · 小红书</p>
-+          <div class="v-tags"><span class="v-tag">代偿</span><span class="v-tag">姿势</span><span class="v-tag">体态</span></div>
-+        </div>
-+      </div><div class="video">
-+        <div class="v-meta">
-+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1s44y1q7vt/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">女性健身误区/根据生理时间安排训练</a></p>
-+          <p class="v-sub">相关知识 · 30:21 · 进阶 · Bilibili</p>
-+          <div class="v-tags"><span class="v-tag">生理期</span><span class="v-tag">计划</span><span class="v-tag">增肌</span></div>
-+        </div>
-+      </div></div>
-+          </details>
-+        </article></section>
-+    <div class="footer">
-+      <div>© <span id="year">2025</span> Goals·Quality·Results</div>
-+      <a href="#top">回到顶部 ↑</a>
-+    </div>
-+  </main>
-+
-+  <section id="extensions" class="container">
-+    <h2 style="display:none">训练笔记与相册</h2>
-+    <div id="fit-extensions"></div>
-+  </section>
-+  <script>
-+    // ====== 数据区（修改这里即可自定义内容）======
-+    const SITE_DATA = {
-+      siteTitle: "FitKnow · 健身知识库",
-+      commonTags: ["力量", "有氧", "增肌", "减脂", "灵活性", "核心", "康复", "营养", "HIIT"],
-+      categories: [
-+        {
-+          id: "hypertrophy",
-+          name: "新手了解",
-+          description: "养成运动习惯；提高身体素质和运动能力；熟悉动作模式。",
-+          videos: [
-+            { title: "【卓叔】新手训练扫盲01：认识全身肌肉", url: "https://www.bilibili.com/video/BV1854y1C7ab?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "10:45", level: "入门", tags: ["新手","肌肉","基础"], platform: "Bilibili" },
-+            { title: "【新手健身计划】一进健身房该怎么练？", url: "https://www.bilibili.com/video/BV1cA411j7oc/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "11:15", level: "入门", tags: ["增肌","RPE","基础"], platform: "Bilibili" },
-+            { title: "【新手健身计划】一器械认识？", url: "https://www.bilibili.com/video/BV184421Q7Kc/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "12:17", level: "入门", tags: ["增肌","RPE","基础"], platform: "Bilibili" },
-+            { title: "健身房指南【10个新手必练动作纠错】", url: "https://www.bilibili.com/video/BV1nt421L7mn?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:16", level: "入门", tags: ["器械","动作","基础"], platform: "Bilibili" },
-+            { title: "30分钟徒手全身力量无氧训练Push/Pull/Legs", url: "https://www.bilibili.com/video/BV1HU4y127eg/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "29:38", level: "入门", tags: ["徒手","全身","居家"], platform: "Bilibili" },
-+            { title: "健身入門｜10分鐘新手核心訓練 女生健身重訓", url: "https://www.bilibili.com/video/BV1s94y1U7sB/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "08:23", level: "入门", tags: ["徒手","全身","居家"], platform: "Bilibili" },
-+            { title: "胸背肩一周如何安排？Push/Pull/Legs", url: "https://www.bilibili.com/video/BV1mG4y1A7qT", duration: "16:11", level: "进阶", tags: ["分化","计划","进阶"], platform: "Bilibili" },
-+            { title: "健身房入门训练计划，一周四练合集", url: "https://www.bilibili.com/video/BV1NP411a7Ju?spm_id_from=333.788.recommend_more_video.1&trackid=web_related_0.router-related-2206146-5nk2d.1761773134511.333&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "13:03", level: "进阶", tags: ["分化","计划","进阶"], platform: "Bilibili" },
-+            { title: "《健身新手的训练完全手册》", url: "https://www.bilibili.com/video/BV1Hk4y187jF/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "56:34", level: "进阶", tags: ["框架","计划","进阶"], platform: "Bilibili" }
-+          ]
-+        },
-+        {
-+          id: "strength",
-+          name: "力量训练",
-+          description: "杠铃/哑铃/器械等基础与进阶力量技巧。",
-+          videos: [
-+            { title: "保姆级深蹲姿势详解", url: "https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:44", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
-+            { title: "普通人如何学会一个标准的深蹲？", url: "https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "09:33", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
-+            { title: "臀腿训练", url: "https://www.bilibili.com/video/BV1Fw4m127ri?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "03:13", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
-+            { title: "背部训练", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:37", level: "进阶", tags: ["上肢","力量","背"], platform: "Bilibili", group: "背部" },
-+            { title: "高位下拉", url: "http://xhslink.com/o/1PpbuTcMwId", duration: "02:04", level: "入门", tags: ["上肢","力量","背"], platform: "小红书", group: "背部" },
-+            { title: "直角肩必练动作，哑铃侧平举动作简介", url: "http://xhslink.com/o/65vmx1PTGoz", duration: "00:18", level: "入门", tags: ["上肢","力量","肩"], platform: "小红书", group: "肩部" },
-+            { title: "肩部训练教学", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:20", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部" },
-+            { title: "胸肩训练教学", url: "https://www.bilibili.com/video/BV1nD421J77T?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:59", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部" },
-+            { title: "简单肩部训练流程", url: "https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:55", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部"},
-+            { title: "紧致胸肩背+修长手臂", url: "https://www.bilibili.com/video/BV1fyugzvEvV?spm_id_from=333.788.recommend_more_video.-1&trackid=web_related_0.router-related-2206146-wxmlq.1761774038673.447&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:02", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部"},
-+            { title: "简单胸部训练教学", url: "https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:45", level: "进阶", tags: ["上肢","力量","胸"], platform: "Bilibili", group: "胸部" }
-+          ]
-+        },
-+        {
-+          id: "cardio",
-+          name: "有氧与减脂",
-+          description: "心肺适能、脂代谢与HIIT实操。",
-+          videos: [
-+            { title: "有氧应该这样做！不伤膝盖、高效瘦身", url: "https://www.bilibili.com/video/BV1T54y1v7op?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "06:59", level: "入门", tags: ["HIIT","减脂","居家"], platform: "Bilibili" },
-+            { title: "帕梅拉 - 10分钟暴汗有氧", url: "https://www.bilibili.com/video/BV1R3411A7g4/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "11:27", level: "入门", tags: ["HIIT","帕梅拉","居家"], platform: "Bilibili" },
-+            { title: "30分钟全程站立有氧燃脂操｜无跳跃 无深蹲 膝友好", url: "https://www.bilibili.com/video/BV1sA411Q7R3/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "31:26", level: "入门", tags: ["有氧","站立","居家"], platform: "Bilibili" }
-+          ]
-+        },
-+        {
-+          id: "mobility",
-+          name: "灵活性与康复",
-+          description: "关节活动度、核心稳定与常见运动损伤预防。",
-+          videos: [
-+            { title: "15分钟每日日常身体灵活性&关节活动练习", url: "https://www.bilibili.com/video/BV1xi421v7xH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "11:52", level: "入门", tags: ["灵活性","全身","居家"], platform: "Bilibili" },
-+            { title: "髋关节功能提高训练详解", url: "https://www.bilibili.com/video/BV1aQ4y1u7Lo/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "06:57", level: "入门", tags: ["灵活性","髋","热身"], platform: "Bilibili" },
-+            { title: "臀腿拉伸合集", url: "http://xhslink.com/o/2f5chdV7u72", duration: "00:25", level: "入门", tags: ["拉伸","臀","腿"], platform: "小红书" },
-+            { title: "5分钟肩关节激活+热身", url: "https://search.bilibili.com/all?vt=38026073&keyword=%E8%82%A9%E5%85%B3%E8%8A%82%E7%81%B5%E6%B4%BB%E6%80%A7%E8%AE%AD%E7%BB%83&from_source=webtop_search&spm_id_from=333.40164&search_source=3", duration: "04:41", level: "入门", tags: ["灵活性","肩","热身"], platform: "Bilibili" },
-+            { title: "【假胯宽】10分钟跟练：髋 膝 踝 都得练", url: "https://www.bilibili.com/video/BV1Q9p1zpEuw?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "10:16", level: "入门", tags: ["体态","髋","膝踝"], platform: "Bilibili" },
-+            { title: "臀凹陷【跟练】开髋收窄骨盆，填补臀凹陷", url: "https://www.bilibili.com/video/BV1x7wveKEKH?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "19:42", level: "入门", tags: ["体态","臀","居家"], platform: "Bilibili" },
-+            { title: "15 分钟脊柱灵活性训练", url: "https://www.bilibili.com/video/BV1sRGEzrEMz/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "15:25", level: "入门", tags: ["灵活性","脊柱","居家"], platform: "Bilibili" }
-+          ]
-+        },
-+        {
-+          id: "nutrition",
-+          name: "营养与补剂",
-+          description: "能量平衡、蛋白质摄入、围训练营养与基础补剂。",
-+          videos: [
-+            { title: "详细的减脂饮食计划", url: "https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "13:57", level: "入门", tags: ["控糖","碳水","减脂"], platform: "Bilibili" },
-+            { title: "不清楚蛋白质吃多少？", url: "https://www.bilibili.com/video/BV1F94y1o7uJ/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:15", level: "入门", tags: ["营养","蛋白质","增肌"], platform: "Bilibili" },
-+            { title: "控糖怎么控？", url: "http://xhslink.com/o/6JERD9IBZdS", duration: "11:09", level: "入门", tags: ["控糖","碳水","减脂"], platform: "小红书" }
-+          ]
-+        },
-+        {
-+          id: "knowledge",
-+          name: "相关知识",
-+          description: "生物学底层逻辑、自身个体认知。",
-+          videos: [
-+            { title: "体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... ", url: "http://xhslink.com/o/7HZKpsMjRNB", duration: "00:45", level: "入门", tags: ["体重","脂肪","减脂"], platform: "小红书" },
-+            { title: "两个动作解决90%的代偿问题 ", url: "http://xhslink.com/o/707FAqOxPcS", duration: "00:00", level: "入门", tags: ["代偿","姿势","体态"], platform: "小红书" },
-+            { title: "自用收藏｜健身发力感tips ", url: "http://xhslink.com/o/4g7u3HDdqbU", duration: "00:00", level: "入门", tags: ["代偿","姿势","体态"], platform: "小红书" },
-+            { title: "女性健身误区/根据生理时间安排训练", url: "https://www.bilibili.com/video/BV1s44y1q7vt/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "30:21", level: "进阶", tags: ["生理期","计划","增肌"], platform: "Bilibili" }
-+          ]
-+        }
-+      ]
-+    };
-+
-+    // ====== 组件渲染 ======
-+    const qs = (sel, el=document) => el.querySelector(sel);
-+    const qsa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
-+
-+    const state = { search: '', level: '', platform: '', tagFilters: new Set() };
-+
-+    function uniqueTags(data) {
-+      const set = new Set([...(data.commonTags || [])]);
-+      data.categories.forEach(c => c.videos.forEach(v => (v.tags||[]).forEach(t => set.add(t))));
-+      return Array.from(set).slice(0, 24);
-+    }
-+
-+    function matchFilters(video, category) {
-+      const text = `${video.title} ${(video.tags||[]).join(' ')} ${category.name}`.toLowerCase();
-+      const searchOk = !state.search || text.includes(state.search.toLowerCase());
-+      const levelOk = !state.level || (video.level === state.level);
-+      const platformOk = !state.platform || (video.platform === state.platform);
-+      const tagsOk = state.tagFilters.size === 0 || (video.tags||[]).some(t => state.tagFilters.has(t));
-+      return searchOk && levelOk && platformOk && tagsOk;
-+    }
-+
-+    function renderChips(tags) {
-+      const wrap = qs('#tagChips');
-+      wrap.innerHTML = '';
-+      tags.forEach(t => {
-+        const btn = document.createElement('button');
-+        btn.className = 'chip';
-+        btn.textContent = t;
-+        btn.addEventListener('click', () => {
-+          if (state.tagFilters.has(t)) state.tagFilters.delete(t); else state.tagFilters.add(t);
-+          btn.classList.toggle('active');
-+          renderCategories();
-+        });
-+        wrap.appendChild(btn);
-+      });
-+    }
-+
-+    function renderCategories() {
-+      const grid = qs('#categories');
-+      grid.innerHTML = '';
-+      SITE_DATA.categories.forEach(cat => {
-+        const vids = cat.videos.filter(v => matchFilters(v, cat));
-+        if (vids.length === 0) return;
-+
-+        const card = document.createElement('article');
-+        card.className = 'category';
-+        card.innerHTML = `
-+          <h2>${cat.name}</h2>
-+          <p>${cat.description || ''}</p>
-+          <details open>
-+            <summary>
-+              <span>共 ${vids.length} 个视频</span>
-+              <span aria-hidden="true">▼</span>
-+            </summary>
-+            <div class="list"></div>
-+          </details>
-+        `;
-+
-+        const list = qs('.list', card);
-+
-+        // ====== 新增：按 group 分组并渲染二级折叠 ======
-+        const grouped = vids.reduce((acc, v) => {
-+          const g = v.group || "全部视频";
-+          (acc[g] ||= []).push(v);
-+          return acc;
-+        }, {});
-+
-+        const groupNames = Object.keys(grouped);
-+
-+        if (groupNames.length === 1 && groupNames[0] === "全部视频") {
-+          // 无分组：按原样渲染
-+          grouped["全部视频"].forEach(v => list.appendChild(renderVideoItem(v, cat)));
-+        } else {
-+          // 有分组：渲染内层 <details>
-+          groupNames.forEach(gName => {
-+            const dv = document.createElement('details');
-+            dv.open = false; // 想默认展开某组可改成：gName === "肩部"
-+            dv.innerHTML = `
-+              <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
-+              <div class="sublist"></div>
-+            `;
-+            const sub = dv.querySelector('.sublist');
-+            grouped[gName].forEach(v => sub.appendChild(renderVideoItem(v, cat)));
-+            list.appendChild(dv);
-+          });
-+        }
-+        // ====== 分组渲染结束 ======
-+
-+        grid.appendChild(card);
-+      });
-+
-+      if (!grid.children.length) {
-+        const empty = document.createElement('div');
-+        empty.style.cssText = 'grid-column:1/-1; text-align:center; padding:40px; color: var(--muted); border:1px dashed rgba(255,255,255,.15); border-radius: 16px;';
-+        empty.textContent = '没有匹配的结果，试试更换搜索或筛选条件～';
-+        grid.appendChild(empty);
-+      }
-+    }
-+
-+    // 渲染单个视频项（复用原有结构）
-+    function renderVideoItem(v, cat) {
-+      const item = document.createElement('div');
-+      item.className = 'video';
-+      const dur = v.duration ? ` · ${v.duration}` : '';
-+      const lvl = v.level ? ` · ${v.level}` : '';
-+      const plat = v.platform ? ` · ${v.platform}` : '';
-+      item.innerHTML = `
-+        <div class="v-meta">
-+          <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
-+          <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
-+          <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
-+        </div>
-+      `;
-+      return item;
-+    }
-+
-+    function bindControls() {
-+      qs('#siteTitle').textContent = SITE_DATA.siteTitle || '我的健身网站';
-+      qs('#year').textContent = new Date().getFullYear();
-+
-+      qs('#searchInput').addEventListener('input', (e) => {
-+        state.search = e.target.value.trim();
-+        renderCategories();
-+      });
-+      qs('#levelSelect').addEventListener('change', (e) => { state.level = e.target.value; renderCategories(); });
-+      qs('#platformSelect').addEventListener('change', (e) => { state.platform = e.target.value; renderCategories(); });
-+
-+      qs('#expandAll').addEventListener('click', () => {
-+        qsa('details').forEach(d => d.open = true);
-+      });
-+    }
-+
-+    // 初始化
-+    bindControls();
-+    renderChips(uniqueTags(SITE_DATA));
-+    renderCategories();
-+  </script>
-+
-+  <script src="assets/fit-extensions.js"></script>
-+</body>
-+</html>
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FitKnow · 健身知识分类模板</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #11131a;
+      --card: #151826;
+      --muted: #99a1b3;
+      --text: #e9edf5;
+      --brand: #7aa2ff;
+      --brand-2: #58f5a5;
+      --ring: rgba(122,162,255,.4);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(88,245,165,.07), transparent 60%),
+                  radial-gradient(900px 600px at -10% 0%, rgba(122,162,255,.08), transparent 55%),
+                  var(--bg);
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+    header { position: sticky; top: 0; backdrop-filter: blur(8px); background: linear-gradient(180deg, rgba(11,12,16,.85), rgba(11,12,16,.55) 60%, transparent); z-index: 10; }
+    .nav { display:flex; align-items:center; justify-content:space-between; padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .brand { display:flex; align-items:center; gap: 12px; font-weight: 700; letter-spacing:.3px; }
+    .logo { width: 28px; height: 28px; border-radius:8px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 6px 16px rgba(122,162,255,.35), inset 0 0 18px rgba(88,245,165,.25); }
+    .brand small { color: var(--muted); font-weight: 500; }
+
+    .tools { display:grid; grid-template-columns: 1fr 170px 170px; gap: 12px; padding: 16px 20px; }
+    .search, .select { display:flex; align-items:center; gap:10px; background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow); }
+    /* 改为不透明的输入背景 */
+    .search input { flex:1; background: #000; border:0; color: var(--text); outline: none; font-size: 14px; }
+    .select select { flex:1; background: #000; border:0; color: var(--text); outline: none; font-size: 14px; }
+
+    .chips { display:flex; flex-wrap:wrap; gap:8px; padding: 0 20px 14px; }
+    .chip { padding:6px 10px; border-radius:999px; background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); font-size: 12px; cursor: pointer; user-select: none; color: #ffffff; }
+    .chip.active { outline: 2px solid var(--ring); background: rgba(122,162,255,.25); color: #ffffff; }
+
+    .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .category { grid-column: span 6; background: linear-gradient(180deg, rgba(21,24,38,.8), rgba(21,24,38,.6)); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+    .category h2 { margin: 8px 0 6px; font-size: 18px; }
+    .category p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+
+    details { background: rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 10px 12px; }
+    summary { cursor: pointer; list-style: none; display:flex; align-items:center; justify-content:space-between; }
+    summary::-webkit-details-marker { display:none; }
+
+    .video { display:flex; gap: 12px; align-items:flex-start; padding: 10px 8px; border-radius: 10px; }
+    .video:hover { background: rgba(255,255,255,.04); }
+    .v-meta { flex: 1; }
+    .v-title { margin: 0; font-size: 15px; font-weight: 600; }
+    .v-sub { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .v-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top: 8px; }
+    .v-tag { font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); }
+
+    .footer { margin-top: 22px; display:flex; justify-content:space-between; align-items:center; color: var(--muted); font-size:12px; }
+
+    @media (max-width: 900px) {
+      .tools { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .category { grid-column: span 1; }
+    }
+
+    /* Small helper buttons */
+    .btn { background: linear-gradient(135deg, rgba(122,162,255,.18), rgba(88,245,165,.18)); border:1px solid rgba(255,255,255,.12); padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--text); cursor: pointer; }
+    .btn:hover { filter: brightness(1.05); }
+
+    /* 二级折叠微样式 */
+    details > summary { cursor: pointer; padding: 6px 0; }
+    .sublist { padding-top: 6px; }
+
+    /* 扩展区域容器 */
+    #extensions { padding: 0 20px 80px; }
+  </style>
+</head>
+<body id="top">
+  <noscript>
+    <div style="margin:0;padding:16px;background:#1c1d24;color:#f8fafc;font-family:system-ui,sans-serif;text-align:center;">
+      您的浏览器已禁用 JavaScript，因此分类筛选和训练笔记/相册功能将无法使用。请启用 JavaScript 后重新打开页面。
+    </div>
+  </noscript>
+  <!-- 使用说明（可删除）：
+    1) 修改下方 SITE_DATA 即可更换站点标题、分类与视频；若需要二级折叠，请给视频加 group 字段（如 "肩部"）。
+    2) 顶部搜索按分类/标题/标签模糊过滤；右侧下拉可按难度、平台筛选；点击“常用标签”可叠加筛选。
+    3) 复制此页面为 index.html 部署到 GitHub Pages / Vercel / Netlify 即可。
+  -->
+
+  <header>
+    <div class="nav container">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div id="siteTitle" style="font-size:16px;">FitKnow · 健身知识库</div>
+          <small> ✏️ · 🏋️‍♀️ · 💪</small>
+        </div>
+      </div>
+      <button class="btn" id="expandAll">展开全部</button>
+    </div>
+    <div class="tools container">
+      <label class="search" aria-label="搜索">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"></circle></svg>
+        <input id="searchInput" placeholder="搜索分类、视频标题或标签…">
+      </label>
+      <label class="select" aria-label="难度">
+        <span style="white-space:nowrap;color:var(--muted);">难度</span>
+        <select id="levelSelect">
+          <option value="">全部</option>
+          <option value="入门">入门</option>
+          <option value="进阶">进阶</option>
+          <option value="高手">高手</option>
+        </select>
+      </label>
+      <label class="select" aria-label="平台">
+        <span style="white-space:nowrap;color:var(--muted);">平台</span>
+        <select id="platformSelect">
+          <option value="">全部</option>
+          <option>小红书</option>
+          <option>Bilibili</option>
+        </select>
+      </label>
+    </div>
+    <div class="chips container" id="tagChips"><button class="chip">力量</button><button class="chip">有氧</button><button class="chip">增肌</button><button class="chip">减脂</button><button class="chip">灵活性</button><button class="chip">核心</button><button class="chip">康复</button><button class="chip">营养</button><button class="chip">HIIT</button><button class="chip">新手</button><button class="chip">肌肉</button><button class="chip">基础</button><button class="chip">RPE</button><button class="chip">器械</button><button class="chip">动作</button><button class="chip">徒手</button><button class="chip">全身</button><button class="chip">居家</button><button class="chip">分化</button><button class="chip">计划</button><button class="chip">进阶</button><button class="chip">框架</button><button class="chip">下肢</button><button class="chip">上肢</button></div>
+  </header>
+
+  <main class="container">
+    <section id="categories" class="grid" aria-live="polite"><article class="category">
+          <h2>新手了解</h2>
+          <p>养成运动习惯；提高身体素质和运动能力；熟悉动作模式。</p>
+          <details open="">
+            <summary>
+              <span>共 9 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1854y1C7ab?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【卓叔】新手训练扫盲01：认识全身肌肉</a></p>
+          <p class="v-sub">新手了解 · 10:45 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">新手</span><span class="v-tag">肌肉</span><span class="v-tag">基础</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1cA411j7oc/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【新手健身计划】一进健身房该怎么练？</a></p>
+          <p class="v-sub">新手了解 · 11:15 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">增肌</span><span class="v-tag">RPE</span><span class="v-tag">基础</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV184421Q7Kc/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【新手健身计划】一器械认识？</a></p>
+          <p class="v-sub">新手了解 · 12:17 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">增肌</span><span class="v-tag">RPE</span><span class="v-tag">基础</span></div>
+        </div>
+      </div>
+      <div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1nt421L7mn?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">健身房指南【10个新手必练动作纠错】</a></p>
+          <p class="v-sub">新手了解 · 05:16 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">器械</span><span class="v-tag">动作</span><span class="v-tag">基础</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1HU4y127eg/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">30分钟徒手全身力量无氧训练Push/Pull/Legs</a></p>
+          <p class="v-sub">新手了解 · 29:38 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">徒手</span><span class="v-tag">全身</span><span class="v-tag">居家</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1s94y1U7sB/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">健身入門｜10分鐘新手核心訓練 女生健身重訓</a></p>
+          <p class="v-sub">新手了解 · 08:23 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">徒手</span><span class="v-tag">全身</span><span class="v-tag">居家</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1mG4y1A7qT" target="_blank" rel="noopener">胸背肩一周如何安排？Push/Pull/Legs</a></p>
+          <p class="v-sub">新手了解 · 16:11 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">分化</span><span class="v-tag">计划</span><span class="v-tag">进阶</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1NP411a7Ju?spm_id_from=333.788.recommend_more_video.1&amp;trackid=web_related_0.router-related-2206146-5nk2d.1761773134511.333&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">健身房入门训练计划，一周四练合集</a></p>
+          <p class="v-sub">新手了解 · 13:03 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">分化</span><span class="v-tag">计划</span><span class="v-tag">进阶</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1Hk4y187jF/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">《健身新手的训练完全手册》</a></p>
+          <p class="v-sub">新手了解 · 56:34 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">框架</span><span class="v-tag">计划</span><span class="v-tag">进阶</span></div>
+        </div>
+      </div></div>
+          </details>
+        </article><article class="category">
+          <h2>力量训练</h2>
+          <p>杠铃/哑铃/器械等基础与进阶力量技巧。</p>
+          <details open="">
+            <summary>
+              <span>共 11 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"><details>
+              <summary><strong>下肢</strong>（3）</summary>
+              <div class="sublist"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">保姆级深蹲姿势详解</a></p>
+          <p class="v-sub">力量训练 · 05:44 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">力量</span><span class="v-tag">下肢</span><span class="v-tag">基础</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">普通人如何学会一个标准的深蹲？</a></p>
+          <p class="v-sub">力量训练 · 09:33 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">力量</span><span class="v-tag">下肢</span><span class="v-tag">基础</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1Fw4m127ri?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">臀腿训练</a></p>
+          <p class="v-sub">力量训练 · 03:13 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">力量</span><span class="v-tag">下肢</span><span class="v-tag">基础</span></div>
+        </div>
+      </div></div>
+            </details><details>
+              <summary><strong>背部</strong>（2）</summary>
+              <div class="sublist"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">背部训练</a></p>
+          <p class="v-sub">力量训练 · 04:37 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">背</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/1PpbuTcMwId" target="_blank" rel="noopener">高位下拉</a></p>
+          <p class="v-sub">力量训练 · 02:04 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">背</span></div>
+        </div>
+      </div></div>
+            </details><details>
+              <summary><strong>肩部</strong>（5）</summary>
+              <div class="sublist"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/65vmx1PTGoz" target="_blank" rel="noopener">直角肩必练动作，哑铃侧平举动作简介</a></p>
+          <p class="v-sub">力量训练 · 00:18 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">肩部训练教学</a></p>
+          <p class="v-sub">力量训练 · 04:20 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1nD421J77T?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">胸肩训练教学</a></p>
+          <p class="v-sub">力量训练 · 02:59 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">简单肩部训练流程</a></p>
+          <p class="v-sub">力量训练 · 02:55 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1fyugzvEvV?spm_id_from=333.788.recommend_more_video.-1&amp;trackid=web_related_0.router-related-2206146-wxmlq.1761774038673.447&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">紧致胸肩背+修长手臂</a></p>
+          <p class="v-sub">力量训练 · 04:02 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">肩</span></div>
+        </div>
+      </div></div>
+            </details><details>
+              <summary><strong>胸部</strong>（1）</summary>
+              <div class="sublist"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">简单胸部训练教学</a></p>
+          <p class="v-sub">力量训练 · 02:45 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">上肢</span><span class="v-tag">力量</span><span class="v-tag">胸</span></div>
+        </div>
+      </div></div>
+            </details></div>
+          </details>
+        </article><article class="category">
+          <h2>有氧与减脂</h2>
+          <p>心肺适能、脂代谢与HIIT实操。</p>
+          <details open="">
+            <summary>
+              <span>共 3 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1T54y1v7op?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">有氧应该这样做！不伤膝盖、高效瘦身</a></p>
+          <p class="v-sub">有氧与减脂 · 06:59 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">HIIT</span><span class="v-tag">减脂</span><span class="v-tag">居家</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1R3411A7g4/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">帕梅拉 - 10分钟暴汗有氧</a></p>
+          <p class="v-sub">有氧与减脂 · 11:27 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">HIIT</span><span class="v-tag">帕梅拉</span><span class="v-tag">居家</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1sA411Q7R3/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">30分钟全程站立有氧燃脂操｜无跳跃 无深蹲 膝友好</a></p>
+          <p class="v-sub">有氧与减脂 · 31:26 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">有氧</span><span class="v-tag">站立</span><span class="v-tag">居家</span></div>
+        </div>
+      </div></div>
+          </details>
+        </article><article class="category">
+          <h2>灵活性与康复</h2>
+          <p>关节活动度、核心稳定与常见运动损伤预防。</p>
+          <details open="">
+            <summary>
+              <span>共 7 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1xi421v7xH/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">15分钟每日日常身体灵活性&amp;关节活动练习</a></p>
+          <p class="v-sub">灵活性与康复 · 11:52 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">全身</span><span class="v-tag">居家</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1aQ4y1u7Lo/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">髋关节功能提高训练详解</a></p>
+          <p class="v-sub">灵活性与康复 · 06:57 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">髋</span><span class="v-tag">热身</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/2f5chdV7u72" target="_blank" rel="noopener">臀腿拉伸合集</a></p>
+          <p class="v-sub">灵活性与康复 · 00:25 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">拉伸</span><span class="v-tag">臀</span><span class="v-tag">腿</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://search.bilibili.com/all?vt=38026073&amp;keyword=%E8%82%A9%E5%85%B3%E8%8A%82%E7%81%B5%E6%B4%BB%E6%80%A7%E8%AE%AD%E7%BB%83&amp;from_source=webtop_search&amp;spm_id_from=333.40164&amp;search_source=3" target="_blank" rel="noopener">5分钟肩关节激活+热身</a></p>
+          <p class="v-sub">灵活性与康复 · 04:41 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">肩</span><span class="v-tag">热身</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1Q9p1zpEuw?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">【假胯宽】10分钟跟练：髋 膝 踝 都得练</a></p>
+          <p class="v-sub">灵活性与康复 · 10:16 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">体态</span><span class="v-tag">髋</span><span class="v-tag">膝踝</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1x7wveKEKH?spm_id_from=333.788.videopod.sections&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">臀凹陷【跟练】开髋收窄骨盆，填补臀凹陷</a></p>
+          <p class="v-sub">灵活性与康复 · 19:42 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">体态</span><span class="v-tag">臀</span><span class="v-tag">居家</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1sRGEzrEMz/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">15 分钟脊柱灵活性训练</a></p>
+          <p class="v-sub">灵活性与康复 · 15:25 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">灵活性</span><span class="v-tag">脊柱</span><span class="v-tag">居家</span></div>
+        </div>
+      </div></div>
+          </details>
+        </article><article class="category">
+          <h2>营养与补剂</h2>
+          <p>能量平衡、蛋白质摄入、围训练营养与基础补剂。</p>
+          <details open="">
+            <summary>
+              <span>共 3 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">详细的减脂饮食计划</a></p>
+          <p class="v-sub">营养与补剂 · 13:57 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">控糖</span><span class="v-tag">碳水</span><span class="v-tag">减脂</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1F94y1o7uJ/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">不清楚蛋白质吃多少？</a></p>
+          <p class="v-sub">营养与补剂 · 04:15 · 入门 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">营养</span><span class="v-tag">蛋白质</span><span class="v-tag">增肌</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/6JERD9IBZdS" target="_blank" rel="noopener">控糖怎么控？</a></p>
+          <p class="v-sub">营养与补剂 · 11:09 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">控糖</span><span class="v-tag">碳水</span><span class="v-tag">减脂</span></div>
+        </div>
+      </div></div>
+          </details>
+        </article><article class="category">
+          <h2>相关知识</h2>
+          <p>生物学底层逻辑、自身个体认知。</p>
+          <details open="">
+            <summary>
+              <span>共 4 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/7HZKpsMjRNB" target="_blank" rel="noopener">体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... </a></p>
+          <p class="v-sub">相关知识 · 00:45 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">体重</span><span class="v-tag">脂肪</span><span class="v-tag">减脂</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/707FAqOxPcS" target="_blank" rel="noopener">两个动作解决90%的代偿问题 </a></p>
+          <p class="v-sub">相关知识 · 00:00 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">代偿</span><span class="v-tag">姿势</span><span class="v-tag">体态</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="http://xhslink.com/o/4g7u3HDdqbU" target="_blank" rel="noopener">自用收藏｜健身发力感tips </a></p>
+          <p class="v-sub">相关知识 · 00:00 · 入门 · 小红书</p>
+          <div class="v-tags"><span class="v-tag">代偿</span><span class="v-tag">姿势</span><span class="v-tag">体态</span></div>
+        </div>
+      </div><div class="video">
+        <div class="v-meta">
+          <p class="v-title"><a href="https://www.bilibili.com/video/BV1s44y1q7vt/?spm_id_from=333.337.search-card.all.click&amp;vd_source=a2afce5df58588cdc73f8faaec0a9d56" target="_blank" rel="noopener">女性健身误区/根据生理时间安排训练</a></p>
+          <p class="v-sub">相关知识 · 30:21 · 进阶 · Bilibili</p>
+          <div class="v-tags"><span class="v-tag">生理期</span><span class="v-tag">计划</span><span class="v-tag">增肌</span></div>
+        </div>
+      </div></div>
+          </details>
+        </article></section>
+    <div class="footer">
+      <div>© <span id="year">2025</span> Goals·Quality·Results</div>
+      <a href="#top">回到顶部 ↑</a>
+    </div>
+  </main>
+
+  <section id="extensions" class="container">
+    <h2 style="display:none">训练笔记与相册</h2>
+    <div id="fit-extensions"></div>
+  </section>
+  <script>
+    // ====== 数据区（修改这里即可自定义内容）======
+    const SITE_DATA = {
+      siteTitle: "FitKnow · 健身知识库",
+      commonTags: ["力量", "有氧", "增肌", "减脂", "灵活性", "核心", "康复", "营养", "HIIT"],
+      categories: [
+        {
+          id: "hypertrophy",
+          name: "新手了解",
+          description: "养成运动习惯；提高身体素质和运动能力；熟悉动作模式。",
+          videos: [
+            { title: "【卓叔】新手训练扫盲01：认识全身肌肉", url: "https://www.bilibili.com/video/BV1854y1C7ab?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "10:45", level: "入门", tags: ["新手","肌肉","基础"], platform: "Bilibili" },
+            { title: "【新手健身计划】一进健身房该怎么练？", url: "https://www.bilibili.com/video/BV1cA411j7oc/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "11:15", level: "入门", tags: ["增肌","RPE","基础"], platform: "Bilibili" },
+            { title: "【新手健身计划】一器械认识？", url: "https://www.bilibili.com/video/BV184421Q7Kc/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "12:17", level: "入门", tags: ["增肌","RPE","基础"], platform: "Bilibili" },
+            { title: "健身房指南【10个新手必练动作纠错】", url: "https://www.bilibili.com/video/BV1nt421L7mn?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:16", level: "入门", tags: ["器械","动作","基础"], platform: "Bilibili" },
+            { title: "30分钟徒手全身力量无氧训练Push/Pull/Legs", url: "https://www.bilibili.com/video/BV1HU4y127eg/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "29:38", level: "入门", tags: ["徒手","全身","居家"], platform: "Bilibili" },
+            { title: "健身入門｜10分鐘新手核心訓練 女生健身重訓", url: "https://www.bilibili.com/video/BV1s94y1U7sB/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "08:23", level: "入门", tags: ["徒手","全身","居家"], platform: "Bilibili" },
+            { title: "胸背肩一周如何安排？Push/Pull/Legs", url: "https://www.bilibili.com/video/BV1mG4y1A7qT", duration: "16:11", level: "进阶", tags: ["分化","计划","进阶"], platform: "Bilibili" },
+            { title: "健身房入门训练计划，一周四练合集", url: "https://www.bilibili.com/video/BV1NP411a7Ju?spm_id_from=333.788.recommend_more_video.1&trackid=web_related_0.router-related-2206146-5nk2d.1761773134511.333&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "13:03", level: "进阶", tags: ["分化","计划","进阶"], platform: "Bilibili" },
+            { title: "《健身新手的训练完全手册》", url: "https://www.bilibili.com/video/BV1Hk4y187jF/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "56:34", level: "进阶", tags: ["框架","计划","进阶"], platform: "Bilibili" }
+          ]
+        },
+        {
+          id: "strength",
+          name: "力量训练",
+          description: "杠铃/哑铃/器械等基础与进阶力量技巧。",
+          videos: [
+            { title: "保姆级深蹲姿势详解", url: "https://www.bilibili.com/video/BV1iQ4y1e7YL/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "05:44", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
+            { title: "普通人如何学会一个标准的深蹲？", url: "https://www.bilibili.com/video/BV1FB4y137gi/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "09:33", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
+            { title: "臀腿训练", url: "https://www.bilibili.com/video/BV1Fw4m127ri?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "03:13", level: "进阶", tags: ["力量","下肢","基础"], platform: "Bilibili", group: "下肢" },
+            { title: "背部训练", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:37", level: "进阶", tags: ["上肢","力量","背"], platform: "Bilibili", group: "背部" },
+            { title: "高位下拉", url: "http://xhslink.com/o/1PpbuTcMwId", duration: "02:04", level: "入门", tags: ["上肢","力量","背"], platform: "小红书", group: "背部" },
+            { title: "直角肩必练动作，哑铃侧平举动作简介", url: "http://xhslink.com/o/65vmx1PTGoz", duration: "00:18", level: "入门", tags: ["上肢","力量","肩"], platform: "小红书", group: "肩部" },
+            { title: "肩部训练教学", url: "https://www.bilibili.com/video/BV1LK4y197mU?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:20", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部" },
+            { title: "胸肩训练教学", url: "https://www.bilibili.com/video/BV1nD421J77T?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:59", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部" },
+            { title: "简单肩部训练流程", url: "https://www.bilibili.com/video/BV1mYwPe9Esh/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:55", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部"},
+            { title: "紧致胸肩背+修长手臂", url: "https://www.bilibili.com/video/BV1fyugzvEvV?spm_id_from=333.788.recommend_more_video.-1&trackid=web_related_0.router-related-2206146-wxmlq.1761774038673.447&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:02", level: "进阶", tags: ["上肢","力量","肩"], platform: "Bilibili", group: "肩部"},
+            { title: "简单胸部训练教学", url: "https://www.bilibili.com/video/BV1i6421Z7iH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "02:45", level: "进阶", tags: ["上肢","力量","胸"], platform: "Bilibili", group: "胸部" }
+          ]
+        },
+        {
+          id: "cardio",
+          name: "有氧与减脂",
+          description: "心肺适能、脂代谢与HIIT实操。",
+          videos: [
+            { title: "有氧应该这样做！不伤膝盖、高效瘦身", url: "https://www.bilibili.com/video/BV1T54y1v7op?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "06:59", level: "入门", tags: ["HIIT","减脂","居家"], platform: "Bilibili" },
+            { title: "帕梅拉 - 10分钟暴汗有氧", url: "https://www.bilibili.com/video/BV1R3411A7g4/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "11:27", level: "入门", tags: ["HIIT","帕梅拉","居家"], platform: "Bilibili" },
+            { title: "30分钟全程站立有氧燃脂操｜无跳跃 无深蹲 膝友好", url: "https://www.bilibili.com/video/BV1sA411Q7R3/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "31:26", level: "入门", tags: ["有氧","站立","居家"], platform: "Bilibili" }
+          ]
+        },
+        {
+          id: "mobility",
+          name: "灵活性与康复",
+          description: "关节活动度、核心稳定与常见运动损伤预防。",
+          videos: [
+            { title: "15分钟每日日常身体灵活性&关节活动练习", url: "https://www.bilibili.com/video/BV1xi421v7xH/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "11:52", level: "入门", tags: ["灵活性","全身","居家"], platform: "Bilibili" },
+            { title: "髋关节功能提高训练详解", url: "https://www.bilibili.com/video/BV1aQ4y1u7Lo/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "06:57", level: "入门", tags: ["灵活性","髋","热身"], platform: "Bilibili" },
+            { title: "臀腿拉伸合集", url: "http://xhslink.com/o/2f5chdV7u72", duration: "00:25", level: "入门", tags: ["拉伸","臀","腿"], platform: "小红书" },
+            { title: "5分钟肩关节激活+热身", url: "https://search.bilibili.com/all?vt=38026073&keyword=%E8%82%A9%E5%85%B3%E8%8A%82%E7%81%B5%E6%B4%BB%E6%80%A7%E8%AE%AD%E7%BB%83&from_source=webtop_search&spm_id_from=333.40164&search_source=3", duration: "04:41", level: "入门", tags: ["灵活性","肩","热身"], platform: "Bilibili" },
+            { title: "【假胯宽】10分钟跟练：髋 膝 踝 都得练", url: "https://www.bilibili.com/video/BV1Q9p1zpEuw?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "10:16", level: "入门", tags: ["体态","髋","膝踝"], platform: "Bilibili" },
+            { title: "臀凹陷【跟练】开髋收窄骨盆，填补臀凹陷", url: "https://www.bilibili.com/video/BV1x7wveKEKH?spm_id_from=333.788.videopod.sections&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "19:42", level: "入门", tags: ["体态","臀","居家"], platform: "Bilibili" },
+            { title: "15 分钟脊柱灵活性训练", url: "https://www.bilibili.com/video/BV1sRGEzrEMz/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "15:25", level: "入门", tags: ["灵活性","脊柱","居家"], platform: "Bilibili" }
+          ]
+        },
+        {
+          id: "nutrition",
+          name: "营养与补剂",
+          description: "能量平衡、蛋白质摄入、围训练营养与基础补剂。",
+          videos: [
+            { title: "详细的减脂饮食计划", url: "https://www.bilibili.com/video/BV154411u7i9/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "13:57", level: "入门", tags: ["控糖","碳水","减脂"], platform: "Bilibili" },
+            { title: "不清楚蛋白质吃多少？", url: "https://www.bilibili.com/video/BV1F94y1o7uJ/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "04:15", level: "入门", tags: ["营养","蛋白质","增肌"], platform: "Bilibili" },
+            { title: "控糖怎么控？", url: "http://xhslink.com/o/6JERD9IBZdS", duration: "11:09", level: "入门", tags: ["控糖","碳水","减脂"], platform: "小红书" }
+          ]
+        },
+        {
+          id: "knowledge",
+          name: "相关知识",
+          description: "生物学底层逻辑、自身个体认知。",
+          videos: [
+            { title: "体重忽高忽低背后的真相、你以为长脂肪了 其实根本不... ", url: "http://xhslink.com/o/7HZKpsMjRNB", duration: "00:45", level: "入门", tags: ["体重","脂肪","减脂"], platform: "小红书" },
+            { title: "两个动作解决90%的代偿问题 ", url: "http://xhslink.com/o/707FAqOxPcS", duration: "00:00", level: "入门", tags: ["代偿","姿势","体态"], platform: "小红书" },
+            { title: "自用收藏｜健身发力感tips ", url: "http://xhslink.com/o/4g7u3HDdqbU", duration: "00:00", level: "入门", tags: ["代偿","姿势","体态"], platform: "小红书" },
+            { title: "女性健身误区/根据生理时间安排训练", url: "https://www.bilibili.com/video/BV1s44y1q7vt/?spm_id_from=333.337.search-card.all.click&vd_source=a2afce5df58588cdc73f8faaec0a9d56", duration: "30:21", level: "进阶", tags: ["生理期","计划","增肌"], platform: "Bilibili" }
+          ]
+        }
+      ]
+    };
+
+    // ====== 组件渲染 ======
+    const qs = (sel, el=document) => el.querySelector(sel);
+    const qsa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    const state = { search: '', level: '', platform: '', tagFilters: new Set() };
+
+    function uniqueTags(data) {
+      const set = new Set([...(data.commonTags || [])]);
+      data.categories.forEach(c => c.videos.forEach(v => (v.tags||[]).forEach(t => set.add(t))));
+      return Array.from(set).slice(0, 24);
+    }
+
+    function matchFilters(video, category) {
+      const text = `${video.title} ${(video.tags||[]).join(' ')} ${category.name}`.toLowerCase();
+      const searchOk = !state.search || text.includes(state.search.toLowerCase());
+      const levelOk = !state.level || (video.level === state.level);
+      const platformOk = !state.platform || (video.platform === state.platform);
+      const tagsOk = state.tagFilters.size === 0 || (video.tags||[]).some(t => state.tagFilters.has(t));
+      return searchOk && levelOk && platformOk && tagsOk;
+    }
+
+    function renderChips(tags) {
+      const wrap = qs('#tagChips');
+      wrap.innerHTML = '';
+      tags.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = t;
+        btn.addEventListener('click', () => {
+          if (state.tagFilters.has(t)) state.tagFilters.delete(t); else state.tagFilters.add(t);
+          btn.classList.toggle('active');
+          renderCategories();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function renderCategories() {
+      const grid = qs('#categories');
+      grid.innerHTML = '';
+      SITE_DATA.categories.forEach(cat => {
+        const vids = cat.videos.filter(v => matchFilters(v, cat));
+        if (vids.length === 0) return;
+
+        const card = document.createElement('article');
+        card.className = 'category';
+        card.innerHTML = `
+          <h2>${cat.name}</h2>
+          <p>${cat.description || ''}</p>
+          <details open>
+            <summary>
+              <span>共 ${vids.length} 个视频</span>
+              <span aria-hidden="true">▼</span>
+            </summary>
+            <div class="list"></div>
+          </details>
+        `;
+
+        const list = qs('.list', card);
+
+        // ====== 新增：按 group 分组并渲染二级折叠 ======
+        const grouped = vids.reduce((acc, v) => {
+          const g = v.group || "全部视频";
+          (acc[g] ||= []).push(v);
+          return acc;
+        }, {});
+
+        const groupNames = Object.keys(grouped);
+
+        if (groupNames.length === 1 && groupNames[0] === "全部视频") {
+          // 无分组：按原样渲染
+          grouped["全部视频"].forEach(v => list.appendChild(renderVideoItem(v, cat)));
+        } else {
+          // 有分组：渲染内层 <details>
+          groupNames.forEach(gName => {
+            const dv = document.createElement('details');
+            dv.open = false; // 想默认展开某组可改成：gName === "肩部"
+            dv.innerHTML = `
+              <summary><strong>${gName}</strong>（${grouped[gName].length}）</summary>
+              <div class="sublist"></div>
+            `;
+            const sub = dv.querySelector('.sublist');
+            grouped[gName].forEach(v => sub.appendChild(renderVideoItem(v, cat)));
+            list.appendChild(dv);
+          });
+        }
+        // ====== 分组渲染结束 ======
+
+        grid.appendChild(card);
+      });
+
+      if (!grid.children.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'grid-column:1/-1; text-align:center; padding:40px; color: var(--muted); border:1px dashed rgba(255,255,255,.15); border-radius: 16px;';
+        empty.textContent = '没有匹配的结果，试试更换搜索或筛选条件～';
+        grid.appendChild(empty);
+      }
+    }
+
+    // 渲染单个视频项（复用原有结构）
+    function renderVideoItem(v, cat) {
+      const item = document.createElement('div');
+      item.className = 'video';
+      const dur = v.duration ? ` · ${v.duration}` : '';
+      const lvl = v.level ? ` · ${v.level}` : '';
+      const plat = v.platform ? ` · ${v.platform}` : '';
+      item.innerHTML = `
+        <div class="v-meta">
+          <p class="v-title"><a href="${v.url}" target="_blank" rel="noopener">${v.title}</a></p>
+          <p class="v-sub">${cat.name}${dur}${lvl}${plat}</p>
+          <div class="v-tags">${(v.tags||[]).map(t => `<span class="v-tag">${t}</span>`).join('')}</div>
+        </div>
+      `;
+      return item;
+    }
+
+    function bindControls() {
+      qs('#siteTitle').textContent = SITE_DATA.siteTitle || '我的健身网站';
+      qs('#year').textContent = new Date().getFullYear();
+
+      qs('#searchInput').addEventListener('input', (e) => {
+        state.search = e.target.value.trim();
+        renderCategories();
+      });
+      qs('#levelSelect').addEventListener('change', (e) => { state.level = e.target.value; renderCategories(); });
+      qs('#platformSelect').addEventListener('change', (e) => { state.platform = e.target.value; renderCategories(); });
+
+      qs('#expandAll').addEventListener('click', () => {
+        qsa('details').forEach(d => d.open = true);
+      });
+    }
+
+    // 初始化
+    bindControls();
+    renderChips(uniqueTags(SITE_DATA));
+    renderCategories();
+  </script>
+
+  <script src="assets/fit-extensions.js"></script>
+</body>
+</html>
