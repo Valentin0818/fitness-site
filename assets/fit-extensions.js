@@ -1,98 +1,114 @@
+/* FitKnow 扩展（训练笔记 + 相册/加密/回收站）
+ * 复制本文件为 /assets/fit-extensions.js 并在页面中引入：
+ * <section id="extensions"><div id="fit-extensions"></div></section>
+ * <script src="assets/fit-extensions.js"></script>
+ */
 (function () {
   // ---------- 小工具 ----------
+  const $ = (sel, root = document) => root.querySelector(sel);
   const h = (tag, attrs = {}, ...children) => {
     const el = document.createElement(tag);
-    for (const [k, v] of Object.entries(attrs || {})) {
-      if (k.startsWith("on") && typeof v === "function") el[k] = v;
-      else if (k === "html") el.innerHTML = v;
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "html") el.innerHTML = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on") && typeof v === "function") el[k] = v;
       else el.setAttribute(k, v);
     }
-    for (const child of children) {
-      if (child == null) continue;
-      el.append(child.nodeType ? child : document.createTextNode(child));
-    }
+    children.flat().forEach((c) =>
+      el.append(c && c.nodeType ? c : document.createTextNode(c ?? ""))
+    );
     return el;
   };
+  const b64 = {
+    toBase64: (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))),
+    fromBase64: (str) =>
+      Uint8Array.from(atob(str), (c) => c.charCodeAt(0)).buffer,
+  };
 
+  // ---------- Shadow DOM 容器 ----------
   const mount = document.getElementById("fit-extensions");
   if (!mount) {
-    console.warn("[FitKnow] 未找到挂载点 #fit-extensions，脚本跳过。");
+    console.warn("[FitKnow] 未找到挂载点 #fit-extensions，已跳过加载。");
     return;
   }
   const root = mount.attachShadow({ mode: "open" });
 
   // ---------- 样式 ----------
-  const style = h("style", {
-    html: `
-:host{all:initial}
-:root{--bg:#0e0f13;--card:#151823;--muted:#9aa3b2;--accent:#6ee7b7;--text:#e6e9ef;--danger:#ef4444;--ring:#7aa2ff66;--shadow:0 10px 30px rgba(0,0,0,.25)}
-*,*::before,*::after{box-sizing:border-box}
-.wrap{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--text)}
+  root.append(
+    h(
+      "style",
+      {
+        html: `
+:host { all: initial; }
+:root{
+  --bg:#0e0f13; --panel:#121521; --card:#151823; --muted:#9aa3b2; --text:#e6e9ef;
+  --accent:#6ee7b7; --accent2:#7aa2ff; --danger:#ef4444; --ring:rgba(122,162,255,.35);
+  --shadow:0 10px 30px rgba(0,0,0,.25); --radius:14px;
+}
+*{box-sizing:border-box} body{font-synthesis-weight:none}
+.wrap{font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--text);}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:900px){.grid{grid-template-columns:1fr}}
-.card{background:linear-gradient(180deg,rgba(21,24,35,.9),rgba(21,24,35,.6));border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-.card-hd{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+@media (max-width: 960px){ .grid{grid-template-columns:1fr} }
+.card{background:linear-gradient(180deg, rgba(21,24,38,.85), rgba(21,24,38,.6));border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--radius); box-shadow:var(--shadow)}
+.card-hd{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06)}
 .title{font-weight:700}
-.muted{color:var(--muted);font-size:12px}
-.body{padding:14px 16px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.input,.select,.textarea{background:#0a0b10;border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:8px 10px;font-size:14px}
-.input, .select{height:36px}
-.textarea{width:100%;min-height:90px;resize:vertical}
-.pill{padding:6px 10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.06)}
-.helper{color:var(--muted);font-size:12px}
-.sep{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
-.list{display:flex;flex-direction:column;gap:10px}
-.btn{cursor:pointer;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:var(--text);border-radius:10px;padding:8px 12px;font-size:13px}
-.btn:hover{filter:brightness(1.06)}
-.btn-accent{background:linear-gradient(135deg,rgba(110,231,183,.22),rgba(122,162,255,.22));border-color:rgba(255,255,255,.22)}
-.btn-danger{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.35)}
+.muted{color:var(--muted)}
+.body{padding:14px}
+.row{display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap}
+.input,.select,.textarea{background:#0b0d15;border:1px solid rgba(255,255,255,.12);color:var(--text);
+  border-radius:10px; padding:9px 10px; outline:none; box-shadow: inset 0 0 0 0 var(--ring)}
+.input:focus,.select:focus,.textarea:focus{box-shadow:0 0 0 2px var(--ring)}
+.input{min-width:170px}
+.select{min-width:150px}
+.textarea{width:100%; min-height:86px; resize:vertical}
+.btn{cursor:pointer;border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px 12px; background:#111528; color:var(--text)}
+.btn:hover{filter:brightness(1.05)}
+.btn-accent{background:linear-gradient(135deg, rgba(122,162,255,.20), rgba(110,231,183,.20))}
 .btn-ghost{background:transparent}
-.flex{display:flex;align-items:center;gap:10px}
+.btn-danger{background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.45)}
+.sep{height:1px; background:rgba(255,255,255,.06); margin:12px 0}
+.list{display:flex; flex-direction:column; gap:10px}
+.helper{color:var(--muted)}
+.pill{padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); font-size:12px}
 .right{margin-left:auto}
-.log-item{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.03)}
-
-.album-card{position:relative;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.03)}
-.album-actions{position:absolute;top:10px;right:10px;display:flex;gap:8px}
-.badge{padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-size:11px}
-
-.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.thumb-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-@media (max-width:1100px){.thumb-grid{grid-template-columns:repeat(4,1fr)}}
-@media (max-width:700px){.thumb-grid{grid-template-columns:repeat(3,1fr)}}
-.thumb{position:relative;border:1px solid rgba(255,255,255,.10);border-radius:10px;overflow:hidden;background:#0a0b10}
-.thumb img{display:block;width:100%;height:120px;object-fit:cover}
-.chk{position:absolute;top:6px;left:6px;transform:scale(1.1)}
-.kebab{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:4px 6px;border:1px solid rgba(255,255,255,.2);border-radius:8px;font-size:12px}
-.empty{border:1px dashed rgba(255,255,255,.2);border-radius:12px;padding:26px;text-align:center}
-    `,
-  });
+.grid-photos{display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin-top:10px}
+.thumb{position:relative; border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden; background:#0b0d15}
+.thumb img{display:block; width:100%; height:100%; object-fit:cover; aspect-ratio:1/1}
+.thumb .ck{position:absolute; top:6px; left:6px; width:18px; height:18px}
+.badge{font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16)}
+.badge.green{background:rgba(110,231,183,.16); border-color:rgba(110,231,183,.45)}
+.badge.gray{background:rgba(255,255,255,.08)}
+.album-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:12px}
+.small{font-size:12px}
+.actions{display:flex; gap:8px; flex-wrap:wrap}
+.hidden{display:none !important}
+`
+      }
+    )
+  );
 
   // ---------- IndexedDB ----------
-  const DB_NAME = "fitknow-db";
-  const DB_VER = 3;
+  const DB_NAME = "fitknow";
+  const DB_VERSION = 3;
   let db;
-
   function openDB() {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VER);
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = (e) => {
         const d = req.result;
-        // 日志
         if (!d.objectStoreNames.contains("logs")) {
           const s = d.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
           s.createIndex("ts", "ts");
         }
-        // 相册
         if (!d.objectStoreNames.contains("albums")) {
           const s = d.createObjectStore("albums", { keyPath: "id", autoIncrement: true });
-          s.createIndex("name", "name", { unique: true });
+          s.createIndex("name", "name", { unique: false });
         }
-        // 照片
         if (!d.objectStoreNames.contains("photos")) {
           const s = d.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
           s.createIndex("albumId", "albumId");
-          s.createIndex("albumId_isDeleted", ["albumId", "isDeleted"]);
+          s.createIndex("deleted", "deleted");
         }
       };
       req.onsuccess = () => {
@@ -104,148 +120,153 @@
   }
   const tx = (stores, mode = "readonly") => db.transaction(stores, mode);
 
-  // ---------- 日志 CRUD ----------
+  // logs
   const addLog = (log) =>
     new Promise((res, rej) => {
-      const req = tx(["logs"], "readwrite").objectStore("logs").add(log);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+      const r = tx(["logs"], "readwrite").objectStore("logs").add({ ...log });
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+  const listLogs = () =>
+    new Promise((res, rej) => {
+      const store = tx(["logs"]).objectStore("logs").index("ts");
+      const out = [];
+      store.openCursor(null, "prev").onsuccess = (e) => {
+        const c = e.target.result;
+        if (!c) return res(out);
+        out.push(c.value);
+        c.continue();
+      };
+      store.openCursor().onerror = () => rej(store.error);
     });
   const delLog = (id) =>
     new Promise((res, rej) => {
-      const req = tx(["logs"], "readwrite").objectStore("logs").delete(id);
-      req.onsuccess = () => res();
-      req.onerror = () => rej(req.error);
+      const r = tx(["logs"], "readwrite").objectStore("logs").delete(id);
+      r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
     });
-  function listLogs() {
-    return new Promise((res, rej) => {
-      const s = tx(["logs"]).objectStore("logs").index("ts");
-      const out = [];
-      s.openCursor(null, "prev").onsuccess = (e) => {
-        const c = e.target.result;
-        if (c) {
-          out.push(c.value);
-          c.continue();
-        } else res(out);
-      };
-      s.openCursor().onerror = () => rej();
-    });
-  }
 
-  // ---------- 相册 CRUD ----------
+  // albums
   const upsertAlbum = (album) =>
     new Promise((res, rej) => {
-      const s = tx(["albums"], "readwrite").objectStore("albums");
-      const req = album.id ? s.put(album) : s.add({ ...album, createdAt: Date.now() });
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+      const r = tx(["albums"], "readwrite").objectStore("albums").put(album);
+      r.onsuccess = () => res(r.result ?? album.id);
+      r.onerror = () => rej(r.error);
     });
   const listAlbums = () =>
     new Promise((res, rej) => {
-      const s = tx(["albums"]).objectStore("albums");
       const out = [];
-      s.openCursor().onsuccess = (e) => {
+      const cur = tx(["albums"]).objectStore("albums").openCursor();
+      cur.onsuccess = (e) => {
         const c = e.target.result;
-        if (c) {
-          out.push(c.value);
-          c.continue();
-        } else res(out.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
+        if (!c) return res(out.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
+        out.push(c.value);
+        c.continue();
       };
-      s.openCursor().onerror = () => rej();
+      cur.onerror = () => rej(cur.error);
     });
   const getAlbum = (id) =>
     new Promise((res, rej) => {
-      const req = tx(["albums"]).objectStore("albums").get(id);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+      const r = tx(["albums"]).objectStore("albums").get(id);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
     });
   const deleteAlbum = (id) =>
     new Promise((res, rej) => {
-      const req = tx(["albums"], "readwrite").objectStore("albums").delete(id);
-      req.onsuccess = () => res();
-      req.onerror = () => rej(req.error);
+      const t = tx(["albums", "photos"], "readwrite");
+      t.objectStore("albums").delete(id);
+      const idx = t.objectStore("photos").index("albumId");
+      const req = idx.openCursor(IDBKeyRange.only(id));
+      req.onsuccess = (e) => {
+        const c = e.target.result;
+        if (!c) return;
+        t.objectStore("photos").delete(c.value.id);
+        c.continue();
+      };
+      t.oncomplete = () => res();
+      t.onerror = () => rej(t.error);
     });
 
-  // ---------- 照片 CRUD ----------
+  // photos
   const addPhoto = (p) =>
     new Promise((res, rej) => {
-      const req = tx(["photos"], "readwrite").objectStore("photos").add(p);
-      req.onsuccess = () => res(req.result);
+      const r = tx(["photos"], "readwrite").objectStore("photos").add(p);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+  const listPhotos = (albumId, where = {}) =>
+    new Promise((res, rej) => {
+      const out = [];
+      const idx = tx(["photos"]).objectStore("photos").index("albumId");
+      const req = idx.openCursor(IDBKeyRange.only(albumId));
+      req.onsuccess = (e) => {
+        const c = e.target.result;
+        if (!c) return res(out.sort((a, b) => b.createdAt - a.createdAt));
+        const v = c.value;
+        let ok = true;
+        for (const k in where) if (v[k] !== where[k]) ok = false;
+        if (ok) out.push(v);
+        c.continue();
+      };
       req.onerror = () => rej(req.error);
     });
-  const putPhoto = (p) =>
+  const updatePhoto = (id, patch) =>
     new Promise((res, rej) => {
-      const req = tx(["photos"], "readwrite").objectStore("photos").put(p);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+      const s = tx(["photos"], "readwrite").objectStore("photos");
+      const r = s.get(id);
+      r.onsuccess = () => {
+        const v = { ...r.result, ...patch };
+        const w = s.put(v);
+        w.onsuccess = () => res(v);
+        w.onerror = () => rej(w.error);
+      };
+      r.onerror = () => rej(r.error);
     });
   const deletePhotoHard = (id) =>
     new Promise((res, rej) => {
-      const req = tx(["photos"], "readwrite").objectStore("photos").delete(id);
-      req.onsuccess = () => res();
-      req.onerror = () => rej(req.error);
+      const r = tx(["photos"], "readwrite").objectStore("photos").delete(id);
+      r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
     });
-  function listPhotos(albumId, isDeleted = 0) {
-    return new Promise((res, rej) => {
-      const idx = tx(["photos"]).objectStore("photos").index("albumId_isDeleted");
-      const out = [];
-      idx.openCursor(IDBKeyRange.only([albumId, isDeleted])).onsuccess = (e) => {
-        const c = e.target.result;
-        if (c) {
-          out.push(c.value);
-          c.continue();
-        } else res(out.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
-      };
-      idx.openCursor().onerror = () => rej();
-    });
-  }
 
-  // 删除相册（深度）：删除相册记录 + 其下所有照片
-  async function deleteAlbumDeep(albumId) {
-    const photos = await listPhotos(albumId, 0);
-    const trash = await listPhotos(albumId, 1);
-    for (const p of photos.concat(trash)) {
-      await deletePhotoHard(p.id);
-    }
-    await deleteAlbum(albumId);
-  }
-
-  // ---------- 加密（可选） ----------
-  async function deriveKey(password) {
+  // ---------- 加密工具（相册设置密码才会用到） ----------
+  const keyCache = new Map(); // albumId -> CryptoKey
+  async function deriveKey(password, saltB64) {
     const enc = new TextEncoder();
-    const salt = enc.encode("fitknow-album-salt");
-    const keyMaterial = await crypto.subtle.importKey(
+    const salt =
+      saltB64 ? b64.fromBase64(saltB64) : crypto.getRandomValues(new Uint8Array(16)).buffer;
+    const keyMat = await crypto.subtle.importKey(
       "raw",
       enc.encode(password),
       "PBKDF2",
       false,
       ["deriveKey"]
     );
-    return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
-      keyMaterial,
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt, iterations: 120000, hash: "SHA-256" },
+      keyMat,
       { name: "AES-GCM", length: 256 },
       false,
       ["encrypt", "decrypt"]
     );
+    return { key, saltB64: b64.toBase64(salt) };
   }
-  async function encryptBytes(key, bytes) {
+  async function encBlob(key, file) {
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes);
-    const blob = new Blob([iv, new Uint8Array(ct)]);
-    return blob;
+    const buf = await file.arrayBuffer();
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buf);
+    return { blob: new Blob([ct]), iv: b64.toBase64(iv.buffer) };
   }
-  async function decryptBytes(key, blob) {
-    const buf = await blob.arrayBuffer();
-    const all = new Uint8Array(buf);
-    const iv = all.slice(0, 12);
-    const data = all.slice(12);
-    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  async function decBlob(key, blob, ivB64) {
+    const iv = b64.fromBase64(ivB64);
+    const ct = await blob.arrayBuffer();
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
     return new Blob([pt]);
   }
 
   // ---------- 视图骨架 ----------
   const app = h("div", { class: "wrap" });
+  // 顶部标签
   const tabs = h(
     "div",
     { class: "row", style: "margin-bottom:12px" },
@@ -254,11 +275,16 @@
     h("span", { class: "right helper" }, "数据保存在本机浏览器，可导出 JSON 备份。")
   );
 
-  // 训练笔记卡片
+  // ---------- 训练笔记 ----------
   const noteCard = h(
     "div",
     { class: "card" },
-    h("div", { class: "card-hd" }, h("div", { class: "title" }, "训练笔记"), h("div", { class: "muted" }, "记录每次训练、动作与感受")),
+    h(
+      "div",
+      { class: "card-hd" },
+      h("div", { class: "title" }, "训练笔记"),
+      h("div", { class: "muted" }, "记录每次训练、动作与感受")
+    ),
     h(
       "div",
       { class: "body" },
@@ -267,23 +293,31 @@
         { class: "row" },
         h("input", { class: "input", id: "date", type: "date" }),
         h("input", { class: "input", id: "session", placeholder: "本次训练主题（如：胸 + 三头）" }),
+        (() => {
+          const sel = h("select", { class: "select", id: "rating", title: "主观强度 RPE" });
+          sel.append(h("option", { value: "", text: "强度（RPE）" }));
+          for (let i = 1; i <= 10; i++) sel.append(h("option", { value: String(i), text: String(i) }));
+          return sel;
+        })()
+      ),
+      h(
+        "div",
+        { class: "row" },
         h(
-          "select",
-          { class: "select", id: "rating", title: "主观强度 RPE" },
-          h("option", { value: "" }, "强度（RPE）"),
-          ...Array.from({ length: 10 }, (_, i) => h("option", { value: String(i + 1) }, String(i + 1)))
+          "textarea",
+          {
+            class: "textarea",
+            id: "exercises",
+            placeholder: "动作清单（每行一个：动作 | 组数x次数 | 重量）\n例：卧推 | 4x6 | 60kg",
+          },
+          ""
         )
       ),
       h(
         "div",
         { class: "row" },
-        h("textarea", {
-          class: "textarea",
-          id: "exercises",
-          placeholder: "动作清单（每行一个：动作 | 组数x次数 | 重量）\n例：卧推 | 4x6 | 60kg",
-        })
+        h("textarea", { class: "textarea", id: "notes", placeholder: "主观感受、疼痛与技术要点…" }, "")
       ),
-      h("div", { class: "row" }, h("textarea", { class: "textarea", id: "notes", placeholder: "主观感受、疼痛与技术要点…" })),
       h(
         "div",
         { class: "row" },
@@ -303,7 +337,9 @@
                 ts: Date.now(),
               };
               await addLog(log);
-              ["session", "rating", "exercises", "notes"].forEach((id) => (root.getElementById(id).value = ""));
+              ["session", "rating", "exercises", "notes"].forEach(
+                (id) => (root.getElementById(id).value = "")
+              );
               loadLogs();
             },
           },
@@ -316,30 +352,32 @@
             id: "exportLogs",
             onclick: async () => {
               const data = await listLogs();
-              const blob = new Blob([JSON.stringify({ type: "fitknow-logs", version: 1, data }, null, 2)], {
-                type: "application/json",
-              });
+              const blob = new Blob(
+                [JSON.stringify({ type: "fitknow-logs", version: 1, data }, null, 2)],
+                { type: "application/json" }
+              );
               const url = URL.createObjectURL(blob);
-              const a = h("a", { href: url, download: `fitknow-logs-${new Date().toISOString().slice(0, 10)}.json` });
+              const a = h("a", { href: url, download: "fitknow-logs.json" });
               root.append(a);
               a.click();
-              URL.revokeObjectURL(url);
               a.remove();
+              URL.revokeObjectURL(url);
             },
           },
           "导出 JSON"
         )
       ),
       h("div", { class: "sep" }),
-      h("div", { class: "list", id: "logList" }, h("div", { class: "empty helper" }, "暂无记录"))
+      h("div", { class: "list", id: "logList" }, h("div", { class: "helper" }, "暂无记录"))
     )
   );
 
-  function renderLogs(items) {
+  async function loadLogs() {
+    const items = await listLogs();
     const box = root.getElementById("logList");
     box.innerHTML = "";
     if (!items.length) {
-      box.append(h("div", { class: "empty helper" }, "暂无记录"));
+      box.append(h("div", { class: "helper" }, "暂无记录"));
       return;
     }
     items.forEach((it) => {
@@ -352,8 +390,8 @@
       const el = h(
         "div",
         { class: "log-item" },
-        h("div", { class: "flex" }, h("h4", {}, head), h("span", { class: "right helper" }, `#${it.id}`)),
-        h("pre", { class: "helper", style: "white-space:pre-wrap;margin:6px 0" }, ex),
+        h("div", { class: "row", style: "margin:0 0 6px 0" }, h("div", { text: head }), h("span", { class: "right helper", text: `#${it.id}` })),
+        h("pre", { class: "helper", style: "white-space:pre-wrap; margin:6px 0" }, ex),
         h("div", { class: "helper", style: "white-space:pre-wrap" }, it.notes || ""),
         h(
           "div",
@@ -374,11 +412,9 @@
       box.append(el);
     });
   }
-  async function loadLogs() {
-    renderLogs(await listLogs());
-  }
 
-  // 相册卡片
+  // ---------- 相册 ----------
+  // 相册列表卡片（左侧输入创建，右侧显示列表）
   const albumCard = h(
     "div",
     { class: "card" },
@@ -390,8 +426,7 @@
     ),
     h(
       "div",
-      { class: "body", id: "albumPanel" },
-      // 顶部创建/更新
+      { class: "body", id: "albumListView" },
       h(
         "div",
         { class: "row" },
@@ -403,76 +438,153 @@
         h("input", {
           class: "input",
           id: "albumPassword",
-          placeholder: "相册密码（可留空为公开）",
           type: "password",
+          placeholder: "相册密码（可留空为公开）",
         }),
         h(
           "button",
           {
             class: "btn btn-accent",
             id: "createAlbum",
-            onclick: async () => {
-              const name = root.getElementById("albumName").value.trim();
-              const pwd = root.getElementById("albumPassword").value;
-              if (!name) {
-                alert("请填写相册名称");
-                return;
-              }
-              const all = await listAlbums();
-              const exist = all.find((a) => a.name === name);
-              const album = exist ? { ...exist } : { name };
-              album.locked = !!pwd; // 仅记录是否加密，不保存密码
-              const id = await upsertAlbum(album);
-              root.getElementById("albumName").value = "";
-              root.getElementById("albumPassword").value = "";
-              renderAlbumList();
-              // 如果是新相册，直接打开
-              openAlbum(exist ? album.id : id);
-            },
+            onclick: onCreateAlbum,
           },
           "创建/更新相册"
         )
       ),
-      h("div", { id: "albumList", class: "list" }, h("div", { class: "empty helper" }, "暂无相册"))
+      h("div", { id: "albumList", class: "list" }, h("div", { class: "helper" }, "暂无相册"))
+    ),
+    // 单个相册视图（打开后显示）
+    h(
+      "div",
+      { class: "body hidden", id: "albumDetailView" },
+      h(
+        "div",
+        { class: "row" },
+        h(
+          "button",
+          {
+            class: "btn",
+            onclick: () => switchView("list"),
+          },
+          "← 返回"
+        ),
+        h("span", { id: "albumTitle", class: "pill" }),
+        h("span", { id: "albumPrivacy", class: "badge gray" }),
+        h(
+          "button",
+          {
+            class: "btn btn-accent",
+            id: "btnUpload",
+            onclick: () => root.getElementById("fileInput").click(),
+          },
+          "上传照片"
+        ),
+        h("input", {
+          id: "fileInput",
+          type: "file",
+          accept: "image/*",
+          multiple: true,
+          class: "hidden",
+          onchange: onFilesSelected,
+        }),
+        h(
+          "button",
+          { class: "btn", id: "btnPick", onclick: () => root.getElementById("fileInput").click() },
+          "选择照片"
+        ),
+        h(
+          "button",
+          {
+            class: "btn",
+            id: "btnToggleTrash",
+            onclick: () => {
+              state.viewingTrash = !state.viewingTrash;
+              loadAlbumPhotos();
+            },
+          },
+          "查看回收站"
+        )
+      ),
+      h(
+        "div",
+        { class: "row" },
+        h(
+          "button",
+          {
+            class: "btn",
+            id: "btnToggleAll",
+            onclick: () => {
+              const all = state.currentPhotos;
+              if (!all.length) return;
+              const shouldAll = !state._allSelected;
+              state.selected = new Set(shouldAll ? all.map((p) => p.id) : []);
+              state._allSelected = shouldAll;
+              renderPhotoGrid();
+            },
+          },
+          "全选/取消全选"
+        ),
+        h(
+          "button",
+          {
+            class: "btn btn-danger",
+            id: "btnDeleteOrRestore",
+            onclick: onBulkDeleteOrRestore,
+          },
+          "批量删除"
+        ),
+        h(
+          "button",
+          {
+            class: "btn btn-danger",
+            id: "btnEmptyTrash",
+            onclick: onEmptyTrash,
+          },
+          "恢复所选"
+        ),
+        h(
+          "button",
+          {
+            class: "btn btn-danger right",
+            id: "btnDeleteAlbum",
+            onclick: onDeleteAlbum,
+          },
+          "删除整本相册"
+        )
+      ),
+      h("div", { id: "photoGrid", class: "grid-photos" })
     )
   );
 
+  // 状态
+  const state = {
+    albumId: null,
+    album: null,
+    viewingTrash: false,
+    selected: new Set(),
+    currentPhotos: [],
+    _allSelected: false,
+  };
+
   // 渲染相册列表
-  async function renderAlbumList() {
-    const box = root.getElementById("albumList");
-    box.innerHTML = "";
+  async function renderAlbums() {
+    const list = root.getElementById("albumList");
+    list.innerHTML = "";
     const albums = await listAlbums();
     if (!albums.length) {
-      box.append(h("div", { class: "empty helper" }, "暂无相册"));
+      list.append(h("div", { class: "helper" }, "暂无相册"));
       return;
     }
-    for (const a of albums) {
-      const live = await listPhotos(a.id, 0);
-      const trash = await listPhotos(a.id, 1);
-      const card = h(
+    albums.forEach((a) => {
+      const locked = !!a.locked;
+      const item = h(
         "div",
-        { class: "album-card" },
-        h("div", { class: "album-actions" },
-          h("button", {
-            class: "btn btn-danger",
-            title: "删除相册（连同其所有照片）",
-            onclick: async () => {
-              if (!confirm(`确定要删除相册「${a.name}」及其所有照片吗？此操作不可恢复。`)) return;
-              await deleteAlbumDeep(a.id);
-              renderAlbumList();
-            }
-          }, "🗑 删除相册")
-        ),
+        { class: "album-item" },
+        h("div", {}, h("strong", { text: a.name }), h("div", { class: "small helper", text: new Date(a.updatedAt || a.createdAt || Date.now()).toLocaleString() })),
         h(
           "div",
-          { class: "flex" },
-          h("div", {}, h("strong", {}, a.name)),
-          h("span", { class: "badge" }, a.locked ? "加密" : "公开"),
-          h("span", { class: "right helper" }, new Date(a.createdAt || Date.now()).toLocaleString())
-        ),
-        h(
-          "div",
-          { class: "row", style: "margin-top:8px" },
+          { class: "actions" },
+          h("span", { class: "badge " + (locked ? "green" : "gray"), text: locked ? "加密" : "公开" }),
           h(
             "button",
             {
@@ -481,375 +593,244 @@
             },
             "打开"
           )
-        ),
-        h(
-          "div",
-          { class: "helper", style: "margin-top:6px" },
-          `照片：${live.length}（回收站 ${trash.length}）`
         )
       );
-      box.append(card);
+      list.append(item);
+    });
+  }
+
+  function switchView(which) {
+    const listV = root.getElementById("albumListView");
+    const detailV = root.getElementById("albumDetailView");
+    if (which === "list") {
+      detailV.classList.add("hidden");
+      listV.classList.remove("hidden");
+      state.albumId = null;
+      state.album = null;
+      state.viewingTrash = false;
+      state.selected.clear();
+    } else {
+      listV.classList.add("hidden");
+      detailV.classList.remove("hidden");
     }
   }
 
-  // 打开相册视图
-  async function openAlbum(albumId) {
-    const album = await getAlbum(albumId);
-    if (!album) return;
-
-    const panel = root.getElementById("albumPanel");
-    panel.innerHTML = ""; // 清空右侧，进入相册
-
-    // 相册会话状态
-    const state = {
-      selection: new Set(),
-      viewingTrash: false,
-      key: null, // AES 密钥
-    };
-
-    async function ensureKeyIfLocked() {
-      if (!album.locked) return true;
-      if (state.key) return true;
-      const pwd = prompt(`相册「${album.name}」已加密，请输入密码以解锁：`);
-      if (!pwd) return false;
-      try {
-        state.key = await deriveKey(pwd);
-        return true;
-      } catch {
-        alert("解锁失败");
-        return false;
-      }
+  async function onCreateAlbum() {
+    const name = root.getElementById("albumName").value.trim();
+    const pwd = root.getElementById("albumPassword").value;
+    if (!name) {
+      alert("请输入相册名称");
+      return;
     }
-
-    // 工具条
-    const fileInput = h("input", { type: "file", accept: "image/*", multiple: true, style: "display:none" });
-    const toolbar = h(
-      "div",
-      { class: "toolbar" },
-      h(
-        "button",
-        {
-          class: "btn",
-          onclick: () => {
-            // 返回相册列表
-            panel.innerHTML = "";
-            panel.append(
-              h(
-                "div",
-                { class: "row" },
-                h("input", { class: "input", id: "albumName", placeholder: "相册名称（如：增肌期 2025-Q1）" }),
-                h("input", {
-                  class: "input",
-                  id: "albumPassword",
-                  placeholder: "相册密码（可留空为公开）",
-                  type: "password",
-                }),
-                h(
-                  "button",
-                  {
-                    class: "btn btn-accent",
-                    id: "createAlbum",
-                    onclick: async () => {
-                      const name = root.getElementById("albumName").value.trim();
-                      const pwd = root.getElementById("albumPassword").value;
-                      if (!name) {
-                        alert("请填写相册名称");
-                        return;
-                      }
-                      const all = await listAlbums();
-                      const exist = all.find((x) => x.name === name);
-                      const na = exist ? { ...exist } : { name };
-                      na.locked = !!pwd;
-                      const id = await upsertAlbum(na);
-                      root.getElementById("albumName").value = "";
-                      root.getElementById("albumPassword").value = "";
-                      renderAlbumList();
-                      openAlbum(exist ? na.id : id);
-                    },
-                  },
-                  "创建/更新相册"
-                )
-              ),
-              h("div", { id: "albumList", class: "list" })
-            );
-            renderAlbumList();
-          },
-        },
-        "← 返回"
-      ),
-      h("strong", {}, album.name),
-      h("span", { class: "badge" }, album.locked ? "加密" : "公开"),
-      h(
-        "button",
-        {
-          class: "btn btn-accent",
-          onclick: async () => {
-            if (album.locked && !(await ensureKeyIfLocked())) return;
-            fileInput.click();
-          },
-        },
-        "上传照片"
-      ),
-      h(
-        "button",
-        {
-          class: "btn",
-          onclick: () => {
-            // 切换回收站/普通
-            state.selection.clear();
-            state.viewingTrash = !state.viewingTrash;
-            renderThumbs();
-          },
-        },
-        () => (state.viewingTrash ? "返回相册" : "查看回收站")
-      ),
-      h(
-        "button",
-        {
-          class: "btn",
-          onclick: () => {
-            // 切换选择模式：实际上就是显示复选框
-            selecting = !selecting;
-            if (!selecting) state.selection.clear();
-            renderThumbs();
-          },
-        },
-        "选择照片"
-      ),
-      h(
-        "button",
-        {
-          class: "btn",
-          onclick: () => {
-            // 全选/取消
-            toggleSelectAll();
-          },
-        },
-        "全选/取消全选"
-      ),
-      h(
-        "button",
-        {
-          class: "btn btn-danger",
-          onclick: async () => {
-            if (!state.selection.size) return;
-            if (!state.viewingTrash) {
-              // 软删除到回收站
-              const photos = await listPhotos(albumId, 0);
-              const set = new Set(state.selection);
-              for (const p of photos) {
-                if (set.has(p.id)) {
-                  p.isDeleted = 1;
-                  await putPhoto(p);
-                }
-              }
-              state.selection.clear();
-              renderThumbs();
-            } else {
-              // 回收站中彻底删除
-              if (!confirm("确定要永久删除所选照片吗？此操作不可恢复。")) return;
-              const photos = await listPhotos(albumId, 1);
-              const set = new Set(state.selection);
-              for (const p of photos) {
-                if (set.has(p.id)) await deletePhotoHard(p.id);
-              }
-              state.selection.clear();
-              renderThumbs();
-            }
-          },
-        },
-        () => (state.viewingTrash ? "彻底删除" : "批量删除（回收站）")
-      ),
-      h(
-        "button",
-        {
-          class: "btn",
-          onclick: async () => {
-            if (!state.selection.size) return;
-            if (!state.viewingTrash) return;
-            // 回收站恢复
-            const photos = await listPhotos(albumId, 1);
-            const set = new Set(state.selection);
-            for (const p of photos) {
-              if (set.has(p.id)) {
-                p.isDeleted = 0;
-                await putPhoto(p);
-              }
-            }
-            state.selection.clear();
-            renderThumbs();
-          },
-        },
-        "恢复所选"
-      ),
-      fileInput
-    );
-
-    // 选择模式与缩略图区域
-    let selecting = false;
-    const grid = h("div", { class: "thumb-grid", id: "thumbGrid" });
-
-    // 文件选择处理
-    fileInput.onchange = async (e) => {
-      const files = Array.from(e.target.files || []);
-      if (!files.length) return;
-      if (album.locked && !(await ensureKeyIfLocked())) return;
-
-      for (const f of files) {
-        const bytes = new Uint8Array(await f.arrayBuffer());
-        let dataBlob;
-        if (album.locked && state.key) {
-          dataBlob = await encryptBytes(state.key, bytes);
-        } else {
-          dataBlob = new Blob([bytes]);
-        }
-        await addPhoto({
-          albumId,
-          isDeleted: 0,
-          locked: album.locked ? 1 : 0,
-          createdAt: Date.now(),
-          name: f.name,
-          blob: dataBlob,
-        });
-      }
-      e.target.value = "";
-      renderThumbs();
+    let album = (await listAlbums()).find((x) => x.name === name) || {
+      name,
+      createdAt: Date.now(),
     };
+    if (pwd) {
+      const { key, saltB64 } = await deriveKey(pwd, album.saltB64);
+      album.locked = true;
+      album.saltB64 = saltB64;
+      keyCache.set(album.id || name, key); // 先临时放，以 id 未生成时用 name 作为键
+    } else {
+      album.locked = false;
+      album.saltB64 = album.saltB64 || null;
+    }
+    album.updatedAt = Date.now();
+    const id = await upsertAlbum(album);
+    // 如果之前用 name 暂存了 key，换成 id
+    const tempKey = keyCache.get(name);
+    if (tempKey) {
+      keyCache.delete(name);
+      keyCache.set(id, tempKey);
+    }
+    root.getElementById("albumName").value = "";
+    root.getElementById("albumPassword").value = "";
+    renderAlbums();
+  }
 
-    // 渲染缩略图
-    async function renderThumbs() {
-      grid.innerHTML = "";
-      const list = await listPhotos(albumId, state.viewingTrash ? 1 : 0);
-      if (!list.length) {
-        grid.append(
-          h(
-            "div",
-            { class: "empty helper", style: "grid-column:1/-1" },
-            state.viewingTrash ? "回收站为空" : "还没有照片，点击「上传照片」添加"
-          )
-        );
+  async function openAlbum(id) {
+    const album = await getAlbum(id);
+    state.albumId = id;
+    state.album = album;
+    state.viewingTrash = false;
+    state.selected.clear();
+    state._allSelected = false;
+
+    // 对加密相册：准备密钥
+    if (album.locked && !keyCache.get(id)) {
+      const pwd = prompt("此相册已加密，请输入密码：");
+      if (!pwd) return alert("未输入密码，无法打开。");
+      try {
+        const { key } = await deriveKey(pwd, album.saltB64);
+        keyCache.set(id, key);
+      } catch (e) {
+        alert("密码不正确或浏览器不支持加密。");
         return;
       }
-      for (const p of list) {
-        const wrap = h("div", { class: "thumb" });
-        let blob = p.blob;
-
-        // 展示时尝试解密（加密相册且处于普通视图时）
-        if (!state.viewingTrash && p.locked) {
-          if (!(await ensureKeyIfLocked())) {
-            // 没有密码展示占位
-            wrap.append(h("div", { class: "kebab" }, "已加密"));
-            wrap.append(h("div", { class: "empty helper" }, "🔒 受保护的照片"));
-            grid.append(wrap);
-            continue;
-          }
-          try {
-            blob = await decryptBytes(state.key, p.blob);
-          } catch {
-            wrap.append(h("div", { class: "kebab" }, "无法解密"));
-            wrap.append(h("div", { class: "empty helper" }, "❌ 解密失败"));
-            grid.append(wrap);
-            continue;
-          }
-        }
-
-        const url = URL.createObjectURL(blob);
-        const img = h("img", { src: url, alt: p.name });
-        wrap.append(img);
-
-        // 复选框
-        if (selecting) {
-          const chk = h("input", {
-            class: "chk",
-            type: "checkbox",
-            checked: state.selection.has(p.id),
-            onchange: (ev) => {
-              if (ev.target.checked) state.selection.add(p.id);
-              else state.selection.delete(p.id);
-            },
-          });
-          wrap.append(chk);
-        }
-
-        // 单个快速操作
-        const kebab = h(
-          "div",
-          { class: "kebab" },
-          !state.viewingTrash
-            ? h(
-                "button",
-                {
-                  class: "btn btn-danger",
-                  onclick: async () => {
-                    p.isDeleted = 1;
-                    await putPhoto(p);
-                    renderThumbs();
-                  },
-                },
-                "删除"
-              )
-            : h(
-                "div",
-                {},
-                h(
-                  "button",
-                  {
-                    class: "btn",
-                    onclick: async () => {
-                      p.isDeleted = 0;
-                      await putPhoto(p);
-                      renderThumbs();
-                    },
-                  },
-                  "恢复"
-                ),
-                h(
-                  "button",
-                  {
-                    class: "btn btn-danger",
-                    onclick: async () => {
-                      if (!confirm("确定永久删除该照片？")) return;
-                      await deletePhotoHard(p.id);
-                      renderThumbs();
-                    },
-                  },
-                  "彻底删除"
-                )
-              )
-        );
-        wrap.append(kebab);
-
-        grid.append(wrap);
-      }
     }
 
-    function toggleSelectAll() {
-      const set = state.selection;
-      const inTrash = state.viewingTrash;
-      const fill = async () => {
-        const list = await listPhotos(albumId, inTrash ? 1 : 0);
-        if (set.size === list.length) set.clear();
-        else {
-          set.clear();
-          list.forEach((p) => set.add(p.id));
-        }
-        renderThumbs();
-      };
-      fill();
-    }
+    // 顶部信息
+    root.getElementById("albumTitle").textContent = album.name;
+    root.getElementById("albumPrivacy").textContent = album.locked ? "加密" : "公开";
+    root.getElementById("albumPrivacy").className = "badge " + (album.locked ? "green" : "gray");
+    root.getElementById("btnToggleTrash").textContent = "查看回收站";
+    root.getElementById("btnDeleteOrRestore").textContent = "批量删除";
+    root.getElementById("btnEmptyTrash").textContent = "恢复所选";
 
-    // 装载
-    panel.append(toolbar, grid);
-    renderThumbs();
+    switchView("detail");
+    await loadAlbumPhotos();
   }
 
-  // 页面装载
-  app.append(tabs, h("div", { class: "grid" }, noteCard, albumCard));
-  root.append(style, app);
+  async function loadAlbumPhotos() {
+    if (!state.albumId) return;
+    const viewingTrash = state.viewingTrash;
+    const photos = await listPhotos(state.albumId, { deleted: viewingTrash ? true : false });
+    state.currentPhotos = photos;
+    state.selected.clear();
+    state._allSelected = false;
 
-  // 启动
-  openDB().then(() => {
-    loadLogs();
-    renderAlbumList();
+    // 顶部按钮文字切换
+    root.getElementById("btnToggleTrash").textContent = viewingTrash ? "返回相册" : "查看回收站";
+    root.getElementById("btnDeleteOrRestore").textContent = viewingTrash ? "批量删除（回收站）" : "批量删除";
+    root.getElementById("btnEmptyTrash").textContent = viewingTrash ? "恢复所选" : "恢复所选";
+
+    renderPhotoGrid();
+  }
+
+  function renderPhotoGrid() {
+    const grid = root.getElementById("photoGrid");
+    grid.innerHTML = "";
+    if (!state.currentPhotos.length) {
+      grid.append(h("div", { class: "helper" }, state.viewingTrash ? "回收站为空" : "暂无照片"));
+      return;
+    }
+    state.currentPhotos.forEach((p) => {
+      const checked = state.selected.has(p.id);
+      const urlPromise = (async () => {
+        if (p.enc) {
+          try {
+            const key = keyCache.get(state.albumId);
+            const dec = await decBlob(key, p.blob, p.iv);
+            return URL.createObjectURL(dec);
+          } catch {
+            return "";
+          }
+        } else {
+          return URL.createObjectURL(p.blob);
+        }
+      })();
+
+      const item = h(
+        "div",
+        { class: "thumb" },
+        h("input", {
+          type: "checkbox",
+          class: "ck",
+          checked,
+          onclick: (e) => {
+            if (e.target.checked) state.selected.add(p.id);
+            else state.selected.delete(p.id);
+          },
+        }),
+        h("img", { alt: p.name })
+      );
+      urlPromise.then((u) => {
+        const img = item.querySelector("img");
+        img.src = u;
+        img.onload = () => setTimeout(() => URL.revokeObjectURL(u), 3000);
+      });
+      grid.append(item);
+    });
+  }
+
+  async function onFilesSelected(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !state.albumId) return;
+
+    const album = state.album;
+    let key = null;
+    if (album.locked) key = keyCache.get(state.albumId);
+
+    for (const f of files) {
+      const rec = {
+        albumId: state.albumId,
+        name: f.name,
+        size: f.size,
+        type: f.type || "image/*",
+        createdAt: Date.now(),
+        deleted: false,
+      };
+      if (album.locked) {
+        const { blob, iv } = await encBlob(key, f);
+        rec.enc = true;
+        rec.iv = iv;
+        rec.blob = blob;
+      } else {
+        rec.enc = false;
+        rec.iv = null;
+        rec.blob = f;
+      }
+      await addPhoto(rec);
+    }
+    // 更新相册时间
+    await upsertAlbum({ ...album, updatedAt: Date.now() });
+    await loadAlbumPhotos();
+    e.target.value = ""; // 清空选择
+  }
+
+  async function onBulkDeleteOrRestore() {
+    if (!state.selected.size) {
+      alert("请先勾选照片");
+      return;
+    }
+    const ids = Array.from(state.selected);
+    if (!state.viewingTrash) {
+      // 移至回收站
+      for (const id of ids) await updatePhoto(id, { deleted: true, deletedAt: Date.now() });
+    } else {
+      // 彻底删除
+      if (!confirm(`将彻底删除 ${ids.length} 张照片，无法恢复，确定吗？`)) return;
+      for (const id of ids) await deletePhotoHard(id);
+    }
+    state.selected.clear();
+    await loadAlbumPhotos();
+  }
+
+  async function onEmptyTrash() {
+    if (!state.selected.size) {
+      // 恢复所有已选为空 -> 尝试恢复全部
+      const photos = state.currentPhotos;
+      if (!photos.length) return;
+      if (!confirm(`恢复回收站内所有 ${photos.length} 张照片？`)) return;
+      for (const p of photos) await updatePhoto(p.id, { deleted: false, deletedAt: null });
+    } else {
+      // 恢复所选
+      for (const id of state.selected) await updatePhoto(id, { deleted: false, deletedAt: null });
+    }
+    state.selected.clear();
+    await loadAlbumPhotos();
+  }
+
+  async function onDeleteAlbum() {
+    if (!state.albumId) return;
+    const a = state.album;
+    if (!confirm(`确定删除相册《${a.name}》及其全部照片吗？此操作不可恢复。`)) return;
+    await deleteAlbum(state.albumId);
+    keyCache.delete(state.albumId);
+    switchView("list");
+    renderAlbums();
+  }
+
+  // ---------- 组装 ----------
+  app.append(
+    tabs,
+    h("div", { class: "grid" }, noteCard, albumCard)
+  );
+  root.append(app);
+
+  // ---------- 初始化 ----------
+  openDB().then(async () => {
+    await loadLogs();
+    await renderAlbums();
   });
 })();
