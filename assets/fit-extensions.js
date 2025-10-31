@@ -1,20 +1,4 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/assets/fit-extensions.js b/assets/fit-extensions.js
-index bb3260b689a0106a5b8dcbe9c918a0b970c9be3f..a711e5d33ad67b3035954c765d10074a56fc912a 100644
---- a/assets/fit-extensions.js
-+++ b/assets/fit-extensions.js
-@@ -1,36 +1,25 @@
--<!--
--FitKnow 扩展集成包（PR 就绪）
--内容：
--1) 新增文件：assets/fit-extensions.js（训练笔记 + 加密相册组件，Shadow DOM 隔离）
--2) 修改根目录 index.html：添加挂载点 <div id="fit-extensions"></div> 与 <script src="assets/fit-extensions.js"></script>
--3) 可选：将脚本放入任意页面，只需存在挂载点即可。
---->
--
--========================
--文件：assets/fit-extensions.js
--========================
+
  (function(){
    // ===== 工具：简易 DOM =====
    const h = (tag, attrs={}, ...children)=>{
