@@ -24,7 +24,7 @@
    const style = h('style', {html: `
      :host{ all:initial }
      :root{ --bg:#0e0f13; --card:#151823; --muted:#9aa3b2; --accent:#6ee7b7; --text:#e6e9ef; --danger:#ef4444; --shadow:0 10px 30px rgba(0,0,0,.25); }
-@@ -145,88 +134,85 @@ FitKnow 扩展集成包（PR 就绪）
+
        req.onsuccess = ()=> resolve(req.result);
        req.onerror = ()=> reject(req.error);
      });
@@ -50,9 +50,9 @@
            ...Array.from({length:10}, (_,i)=>h('option', {value:String(i+1)}, String(i+1)))
          )
        ),
--      h('div', {class:'row'}, h('textarea', {class:'textarea', id:'exercises', placeholder:'动作清单（每行一个：动作 | 组数x次数 | 重量）
--例：卧推 | 4x6 | 60kg'})),
-+      h('div', {class:'row'}, h('textarea', {class:'textarea', id:'exercises', placeholder:'动作清单（每行一个：动作 | 组数x次数 | 重量）\n例：卧推 | 4x6 | 60kg'})),
+       h('div', {class:'row'}, h('textarea', {class:'textarea', id:'exercises', placeholder:'动作清单（每行一个：动作 | 组数x次数 | 重量）
+ 例：卧推 | 4x6 | 60kg'})),
+       h('div', {class:'row'}, h('textarea', {class:'textarea', id:'exercises', placeholder:'动作清单（每行一个：动作 | 组数x次数 | 重量）\n例：卧推 | 4x6 | 60kg'})),
        h('div', {class:'row'}, h('textarea', {class:'textarea', id:'notes', placeholder:'主观感受、疼痛与技术要点…'})),
        h('div', {class:'row'},
          h('button', {class:'btn btn-accent', id:'saveLog'}, '保存记录'),
@@ -86,10 +86,8 @@
      if(!items.length){ box.append(h('div',{class:'helper'},'暂无记录')); return; }
      items.forEach(it=>{
        const head = `${it.date || ''} · ${it.session || '未命名'} · RPE ${it.rating || '-'}`;
--      const ex = (it.exercises||'').split(/
--+/).filter(Boolean).map(line=>`• ${line}`).join('
--');
-+      const ex = (it.exercises||'').split(/\n+/).filter(Boolean).map(line=>`• ${line}`).join('\n');
+       const ex = (it.exercises||'').split(/-+/).filter(Boolean).map(line=>`• ${line}`).join('-');
+       const ex = (it.exercises||'').split(/\n+/).filter(Boolean).map(line=>`• ${line}`).join('\n');
        const el = h('div', {class:'log-item'},
          h('div', {class:'flex'}, h('h4',{}, head), h('span',{class:'right helper'}, `#${it.id}`)),
          h('pre', {class:'helper', style:'white-space:pre-wrap; margin:6px 0'}, ex),
@@ -115,7 +113,7 @@
      const data = await listLogs();
      const blob = new Blob([JSON.stringify({ type:'fitknow-logs', version:1, data }, null, 2)], {type:'application/json'});
      const url = URL.createObjectURL(blob);
-@@ -301,71 +287,25 @@ FitKnow 扩展集成包（PR 就绪）
+
        }catch(err){ grid.append(h('div',{class:'helper'},`无法解密 #${p.id}`)); continue; }
        const url = URL.createObjectURL(blob);
        const img = h('img', {src:url, alt:p.name});
