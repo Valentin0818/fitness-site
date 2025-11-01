@@ -1,6 +1,6 @@
 /* assets/fit-extensions.js */
 (function () {
-  // ========== 小工具 ==========
+  // ========= 轻量 DOM =========
   const h = (tag, attrs = {}, ...children) => {
     const el = document.createElement(tag);
     for (const [k, v] of Object.entries(attrs || {})) {
@@ -14,345 +14,61 @@
     }
     return el;
   };
-  const fmtTime = (ts) =>
-    new Date(ts).toLocaleString([], {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  const buf2b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
-  const b642buf = (b64) =>
-    Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)).buffer;
-  const textEnc = new TextEncoder();
-  const textDec = new TextDecoder();
 
-  // ========== Shadow DOM ==========
+  // ========= 挂载点 / Shadow =========
   const mount = document.getElementById("fit-extensions");
   if (!mount) {
-    console.warn("[FitKnow] 未找到挂载点 #fit-extensions，跳过加载");
+    console.warn("[FitKnow] 未找到挂载点 #fit-extensions，已跳过");
     return;
   }
   const root = mount.attachShadow({ mode: "open" });
 
-  // ========== 样式 ==========
-  root.append(
-    h(
-      "style",
-      {
-        html: `
-:host{ all:initial; }
-:root{ --bg:#0e0f13; --card:#151823; --muted:#9aa3b2; --accent:#6ee7b7; --text:#e6e9ef; --danger:#ef4444; --ring:rgba(110,231,183,.35); --shadow:0 10px 30px rgba(0,0,0,.25); --radius:16px;}
-*{box-sizing:border-box; font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
-.wrap{ color:var(--text); }
-.grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
-@media (max-width:920px){ .grid{ grid-template-columns: 1fr; } }
+  // ========= 样式 =========
+  const style = h("style", {
+    html: `
+    :host{all:initial}
+    :root{ --bg:#0e0f13; --panel:#11131a; --card:#151823; --muted:#9aa3b2; --text:#e6e9ef; --accent:#6ee7b7; --danger:#ef4444; --ring:rgba(110,231,183,.35); --shadow:0 10px 30px rgba(0,0,0,.25); --radius:14px;}
+    .wrap{ font:14px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; color:var(--text)}
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px }
+    @media (max-width:900px){ .grid{ grid-template-columns:1fr } }
+    .card{ background:linear-gradient(180deg,rgba(21,24,35,.85),rgba(21,24,35,.65)); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden }
+    .card-hd{ display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.06)}
+    .title{ font-weight:700 }
+    .muted{ color:var(--muted) }
+    .body{ padding:14px 16px }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+    .input,.select,.textarea{ background:#0b0c10; border:1px solid rgba(255,255,255,.12); color:var(--text); padding:8px 10px; border-radius:10px; outline:none }
+    .input,.select{ height:36px }
+    .textarea{ width:100%; min-height:100px; resize:vertical }
+    .btn{ background:linear-gradient(135deg, rgba(110,231,183,.16), rgba(255,255,255,.06)); border:1px solid rgba(255,255,255,.14); color:var(--text); padding:8px 12px; border-radius:10px; cursor:pointer; user-select:none }
+    .btn:hover{ filter:brightness(1.05) }
+    .btn-accent{ border-color:rgba(110,231,183,.45) }
+    .btn-danger{ background:linear-gradient(135deg, rgba(239,68,68,.18), rgba(255,255,255,.06)); border-color:rgba(239,68,68,.5) }
+    .btn-ghost{ background:transparent; border-color:rgba(255,255,255,.12) }
+    .right{ margin-left:auto }
+    .sep{ height:1px; background:rgba(255,255,255,.08); margin:12px 0 }
+    .list{ display:flex; flex-direction:column; gap:10px }
+    .helper{ color:var(--muted); font-size:12px }
+    .pill{ border:1px solid rgba(255,255,255,.2); padding:4px 10px; border-radius:999px }
+    .flex{ display:flex; gap:10px; align-items:center }
+    .badge{ border:1px solid rgba(255,255,255,.15); padding:2px 8px; border-radius:999px; font-size:12px; color:var(--muted) }
+    .badge-lock{ border-color:rgba(110,231,183,.45); color:#b7ffe6 }
+    .thumbs{ display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; margin-top:10px }
+    @media (max-width:1100px){ .thumbs{ grid-template-columns:repeat(4,1fr) } }
+    @media (max-width:700px){ .thumbs{ grid-template-columns:repeat(3,1fr) } }
+    .ph{ position:relative; background:#0b0c10; border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center }
+    .ph img{ width:100%; height:100%; object-fit:cover }
+    .ph input[type="checkbox"]{ position:absolute; top:6px; left:6px; transform:scale(1.1) }
+    .ph .del{ position:absolute; right:6px; top:6px; font-size:12px; padding:4px 6px; border-radius:8px; background:rgba(239,68,68,.8); color:#fff; cursor:pointer }
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px }
+    .spacer{ flex:1 }
+  `,
+  });
 
-.card{ background:linear-gradient(180deg, rgba(21,24,35,.85), rgba(21,24,35,.65)); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); box-shadow:var(--shadow); }
-.card-hd{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08); }
-.card-hd .title{ font-weight:700; }
-.card-hd .muted{ color:var(--muted); font-size:12px; }
-.body{ padding:16px; }
-
-.row{ display:flex; gap:10px; align-items:center; }
-.flex{ display:flex; align-items:center; gap:10px; }
-.right{ margin-left:auto; }
-.sep{ height:1px; background:rgba(255,255,255,.08); margin:12px 0; }
-
-.input,.select,.textarea{ width:100%; background:#0a0c10; border:1px solid rgba(255,255,255,.12); color:var(--text); border-radius:10px; padding:10px 12px; outline:0; }
-.textarea{ min-height:88px; resize:vertical; }
-.pill{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); font-size:12px; }
-.muted{ color:var(--muted); }
-.helper{ color:var(--muted); font-size:12px; }
-.list{ display:flex; flex-direction:column; gap:10px; }
-
-.btn{ appearance:none; border:1px solid rgba(255,255,255,.14); padding:8px 12px; border-radius:10px; cursor:pointer; background:rgba(255,255,255,.06); color:var(--text); }
-.btn:hover{ filter:brightness(1.06); }
-.btn-accent{ border-color:rgba(110,231,183,.35); background:linear-gradient(135deg, rgba(110,231,183,.18), rgba(122,162,255,.12)); box-shadow: inset 0 0 10px rgba(110,231,183,.15); }
-.btn-danger{ border-color: rgba(239,68,68,.45); background: linear-gradient(135deg, rgba(239,68,68,.22), rgba(239,68,68,.12)); }
-
-.badge{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); }
-.badge-lock{ border-color:rgba(239,68,68,.5); }
-
-.album-grid{ display:grid; grid-template-columns: repeat(auto-fill, 160px); gap:12px; }
-.thumb{ position:relative; border:1px solid rgba(255,255,255,.12); background:#0a0c10; border-radius:12px; overflow:hidden; }
-.thumb img{ width:100%; height:120px; object-fit:cover; display:block; background:#000; }
-.thumb .meta{ padding:8px; display:flex; gap:8px; align-items:center; }
-.thumb input[type="checkbox"]{ width:16px; height:16px; }
-
-.toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
-.toolbar .spacer{ flex:1; }
-.small{ font-size:12px; }
-`
-      }
-    )
-  );
-
-  // ========== IndexedDB ==========
-  const DB_NAME = "fitknow-db";
-  const DB_VERSION = 4; // 关键：版本号提升，避免 VersionError
-
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-
-      req.onupgradeneeded = () => {
-        const db = req.result;
-
-        if (!db.objectStoreNames.contains("logs")) {
-          const s = db.createObjectStore("logs", {
-            keyPath: "id",
-            autoIncrement: true,
-          });
-          s.createIndex("ts", "ts", { unique: false });
-        }
-        if (!db.objectStoreNames.contains("albums")) {
-          db.createObjectStore("albums", { keyPath: "name" });
-        }
-        if (!db.objectStoreNames.contains("photos")) {
-          const p = db.createObjectStore("photos", {
-            keyPath: "id",
-            autoIncrement: true,
-          });
-          p.createIndex("album", "album", { unique: false });
-          p.createIndex("deleted", "deleted", { unique: false });
-        }
-      };
-
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-  let DB;
-  const tx = (stores, mode = "readonly") =>
-    DB.transaction(stores, mode).objectStore(stores);
-
-  // === Logs ===
-  const addLog = (log) =>
-    new Promise((res, rej) => {
-      const s = tx("logs", "readwrite");
-      const data = {
-        ...log,
-        ts: log.ts ?? Date.now(),
-      };
-      const req = s.add(data);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
-    });
-
-  const listLogs = () =>
-    new Promise((res, rej) => {
-      const s = tx("logs");
-      const out = [];
-      const idx = s.index("ts");
-      const req = idx.openCursor(null, "prev");
-      req.onsuccess = () => {
-        const cur = req.result;
-        if (cur) {
-          out.push(cur.value);
-          cur.continue();
-        } else res(out);
-      };
-      req.onerror = () => rej(req.error);
-    });
-
-  const delLog = (id) =>
-    new Promise((res, rej) => {
-      const s = tx("logs", "readwrite");
-      const req = s.delete(id);
-      req.onsuccess = () => res();
-      req.onerror = () => rej(req.error);
-    });
-
-  // === Albums ===
-  const upsertAlbum = (album) =>
-    new Promise((res, rej) => {
-      const s = tx("albums", "readwrite");
-      const now = Date.now();
-      const req = s.put({
-        createdAt: album.createdAt ?? now,
-        updatedAt: now,
-        ...album,
-      });
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
-    });
-
-  const getAlbum = (name) =>
-    new Promise((res, rej) => {
-      const s = tx("albums");
-      const req = s.get(name);
-      req.onsuccess = () => res(req.result || null);
-      req.onerror = () => rej(req.error);
-    });
-
-  const listAlbums = () =>
-    new Promise((res, rej) => {
-      const s = tx("albums");
-      const out = [];
-      const req = s.openCursor();
-      req.onsuccess = () => {
-        const cur = req.result;
-        if (cur) {
-          out.push(cur.value);
-          cur.continue();
-        } else {
-          out.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-          res(out);
-        }
-      };
-      req.onerror = () => rej(req.error);
-    });
-
-  // === Photos ===
-  const addPhoto = (photo) =>
-    new Promise((res, rej) => {
-      const s = tx("photos", "readwrite");
-      const data = {
-        deleted: false,
-        createdAt: Date.now(),
-        ...photo,
-      };
-      const req = s.add(data);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
-    });
-
-  const getPhotosByAlbum = (album, includeDeleted = false) =>
-    new Promise((res, rej) => {
-      const s = tx("photos");
-      const idx = s.index("album");
-      const range = IDBKeyRange.only(album);
-      const out = [];
-      const req = idx.openCursor(range, "prev");
-      req.onsuccess = () => {
-        const cur = req.result;
-        if (cur) {
-          const v = cur.value;
-          if (includeDeleted || !v.deleted) out.push(v);
-          cur.continue();
-        } else res(out);
-      };
-      req.onerror = () => rej(req.error);
-    });
-
-  const markDeleted = (ids, deleted) =>
-    new Promise((res, rej) => {
-      const s = tx("photos", "readwrite");
-      let count = 0;
-      ids.forEach((id) => {
-        const g = s.get(id);
-        g.onsuccess = () => {
-          const v = g.result;
-          if (!v) return;
-          v.deleted = deleted;
-          v.deletedAt = deleted ? Date.now() : undefined;
-          const p = s.put(v);
-          p.onsuccess = () => {
-            count++;
-            if (count === ids.length) res();
-          };
-          p.onerror = () => rej(p.error);
-        };
-        g.onerror = () => rej(g.error);
-      });
-    });
-
-  const purgePhotos = (ids) =>
-    new Promise((res, rej) => {
-      const s = tx("photos", "readwrite");
-      let count = 0;
-      ids.forEach((id) => {
-        const d = s.delete(id);
-        d.onsuccess = () => {
-          count++;
-          if (count === ids.length) res();
-        };
-        d.onerror = () => rej(d.error);
-      });
-    });
-
-  // ========== 加密/验证 ==========
-  async function hashVerifier(saltB64, password) {
-    // verifier = SHA-256 ( salt + password )
-    const data = new Uint8Array([
-      ...new Uint8Array(b642buf(saltB64)),
-      ...textEnc.encode(password),
-    ]);
-    const dig = await crypto.subtle.digest("SHA-256", data);
-    return buf2b64(dig);
-  }
-
-  async function deriveKeyPBKDF2(password, saltB64) {
-    const keyMat = await crypto.subtle.importKey(
-      "raw",
-      textEnc.encode(password),
-      "PBKDF2",
-      false,
-      ["deriveKey"]
-    );
-    return crypto.subtle.deriveKey(
-      {
-        name: "PBKDF2",
-        salt: b642buf(saltB64),
-        iterations: 120000,
-        hash: "SHA-256",
-      },
-      keyMat,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["encrypt", "decrypt"]
-    );
-  }
-
-  async function encryptForAlbum(key, file) {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const buf = await file.arrayBuffer();
-    const ct = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv },
-      key,
-      buf
-    );
-    return { iv: buf2b64(iv), blob: new Blob([ct], { type: file.type }) };
-  }
-
-  async function decryptPhoto(key, ivB64, blob) {
-    const buf = await blob.arrayBuffer();
-    const pt = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: b642buf(ivB64) },
-      key,
-      buf
-    );
-    return new Blob([pt], { type: blob.type || "image/*" });
-  }
-
-  // 保存每个已验证相册的内存会话密钥
-  const sessionKeys = new Map(); // albumName -> CryptoKey
-
-  async function ensureAlbumAccess(album) {
-    if (!album.locked) return true;
-    if (sessionKeys.has(album.name)) return true;
-
-    const pwd = prompt(`相册「${album.name}」已加密，请输入密码`);
-    if (pwd == null) return false;
-
-    const ver = await hashVerifier(album.salt, pwd);
-    if (ver !== album.verifier) {
-      alert("密码错误");
-      return false;
-    }
-    const key = await deriveKeyPBKDF2(pwd, album.salt);
-    sessionKeys.set(album.name, key);
-    return true;
-  }
-
-  // ========== 视图 ==========
+  // ========= 容器 =========
   const app = h("div", { class: "wrap" });
 
-  // 顶部标签（纯展示）
+  // 顶部标签
   const tabs = h(
     "div",
     { class: "row", style: "margin-bottom:12px" },
@@ -361,11 +77,280 @@
     h(
       "span",
       { class: "right helper" },
-      "数据离线保存在本机浏览器，可导出 JSON 备份。"
+      "数据保存在本机浏览器，可导出 JSON 备份。"
     )
   );
 
-  // === 左：训练笔记 ===
+  // ========= IndexedDB =========
+  let db;
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open("fitknow", 3); // **版本 3：避免你之前的 VersionError**
+      req.onupgradeneeded = (ev) => {
+        const d = ev.target.result;
+        // notes
+        if (!d.objectStoreNames.contains("logs")) {
+          const s = d.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
+          s.createIndex("ts", "ts");
+        }
+        // albums
+        if (!d.objectStoreNames.contains("albums")) {
+          const s = d.createObjectStore("albums", { keyPath: "name" });
+          s.createIndex("updatedAt", "updatedAt");
+        }
+        // photos
+        if (!d.objectStoreNames.contains("photos")) {
+          const s = d.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
+          s.createIndex("album", "album");
+          s.createIndex("album_trash", ["album", "trash"]);
+        }
+      };
+      req.onsuccess = () => {
+        db = req.result;
+        resolve();
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+  const tx = (store, mode = "readonly") => db.transaction(store, mode).objectStore(store);
+
+  // ========= Notes API =========
+  function addLog(log) {
+    return new Promise((res, rej) => {
+      const s = tx("logs", "readwrite");
+      const put = s.add(log);
+      put.onsuccess = res;
+      put.onerror = () => rej(put.error);
+    });
+  }
+  function listLogs() {
+    return new Promise((res, rej) => {
+      const s = tx("logs");
+      const idx = s.index("ts");
+      const out = [];
+      idx.openCursor(null, "prev").onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) {
+          out.push(c.value);
+          c.continue();
+        } else res(out);
+      };
+      idx.openCursor().onerror = () => rej(idx.error);
+    });
+  }
+  function delLog(id) {
+    return new Promise((res, rej) => {
+      const s = tx("logs", "readwrite");
+      const d = s.delete(id);
+      d.onsuccess = res;
+      d.onerror = () => rej(d.error);
+    });
+  }
+
+  // ========= Crypto 工具 =========
+  const textEnc = new TextEncoder();
+  const textDec = new TextDecoder();
+  const sessionKeys = new Map(); // name -> CryptoKey（仅本会话）
+
+  async function pbkdf2KeyFromPassword(password, saltB64) {
+    const salt = base64ToBytes(saltB64);
+    const baseKey = await crypto.subtle.importKey(
+      "raw",
+      textEnc.encode(password),
+      "PBKDF2",
+      false,
+      ["deriveKey"]
+    );
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+    return key;
+  }
+  function bytesToBase64(u8) {
+    let s = "";
+    u8.forEach((b) => (s += String.fromCharCode(b)));
+    return btoa(s);
+  }
+  function base64ToBytes(b64) {
+    const s = atob(b64);
+    const u8 = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i);
+    return u8;
+  }
+  async function encryptBytes(bytes, key) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes);
+    return { iv: bytesToBase64(iv), data: bytesToBase64(new Uint8Array(ct)) };
+  }
+  async function decryptBytes(enc, key) {
+    const iv = base64ToBytes(enc.iv);
+    const ct = base64ToBytes(enc.data);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+    return new Uint8Array(pt);
+  }
+
+  // ========= Albums API =========
+  function listAlbums() {
+    return new Promise((res, rej) => {
+      const s = tx("albums");
+      const idx = s.index("updatedAt");
+      const out = [];
+      idx.openCursor(null, "prev").onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) {
+          out.push(c.value);
+          c.continue();
+        } else res(out);
+      };
+      idx.openCursor().onerror = () => rej(idx.error);
+    });
+  }
+  function getAlbum(name) {
+    return new Promise((res, rej) => {
+      const s = tx("albums");
+      const g = s.get(name);
+      g.onsuccess = () => res(g.result || null);
+      g.onerror = () => rej(g.error);
+    });
+  }
+  function upsertAlbum(album) {
+    album.updatedAt = Date.now();
+    if (!album.createdAt) album.createdAt = album.updatedAt;
+    return new Promise((res, rej) => {
+      const s = tx("albums", "readwrite");
+      const put = s.put(album);
+      put.onsuccess = res;
+      put.onerror = () => rej(put.error);
+    });
+  }
+
+  // 新建/更新相册（可设置密码）
+  async function createOrUpdateAlbumFromInputs() {
+    const name = root.getElementById("albumName").value.trim();
+    const pwd = root.getElementById("albumPassword").value;
+    if (!name) {
+      alert("请填写相册名称");
+      return;
+    }
+    const exist = await getAlbum(name);
+    const album = exist ? { ...exist } : { name };
+    if (pwd) {
+      // 生成/或复用 salt，创建 verify
+      const salt = album.salt || bytesToBase64(crypto.getRandomValues(new Uint8Array(16)));
+      const key = await pbkdf2KeyFromPassword(pwd, salt);
+      const verify = await encryptBytes(textEnc.encode("FITOK"), key);
+      album.locked = true;
+      album.salt = salt;
+      album.verify = verify;
+      sessionKeys.set(name, key); // 便于随即打开
+    } else {
+      album.locked = false;
+      delete album.salt;
+      delete album.verify;
+      sessionKeys.delete(name);
+    }
+    await upsertAlbum(album);
+    root.getElementById("albumName").value = "";
+    root.getElementById("albumPassword").value = "";
+    await renderAlbums();
+  }
+
+  // 照片 CRUD
+  function addPhotoRec(rec) {
+    return new Promise((res, rej) => {
+      const s = tx("photos", "readwrite");
+      const put = s.add(rec);
+      put.onsuccess = res;
+      put.onerror = () => rej(put.error);
+    });
+  }
+  function listPhotosByAlbum(name, wantTrash = false) {
+    return new Promise((res, rej) => {
+      const s = tx("photos");
+      const idx = s.index("album_trash");
+      const range = IDBKeyRange.only([name, wantTrash]);
+      const out = [];
+      idx.openCursor(range, "prev").onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) {
+          out.push(c.value);
+          c.continue();
+        } else res(out);
+      };
+      idx.openCursor().onerror = () => rej(idx.error);
+    });
+  }
+  function markTrash(ids, onOff) {
+    return new Promise((res, rej) => {
+      const s = tx("photos", "readwrite");
+      let left = ids.length;
+      if (!left) return res();
+      ids.forEach((id) => {
+        const g = s.get(id);
+        g.onsuccess = () => {
+          const v = g.result;
+          if (!v) {
+            if (--left === 0) res();
+            return;
+          }
+          v.trash = !!onOff;
+          const p = s.put(v);
+          p.onsuccess = () => {
+            if (--left === 0) res();
+          };
+          p.onerror = () => rej(p.error);
+        };
+        g.onerror = () => rej(g.error);
+      });
+    });
+  }
+  function deletePhotos(ids) {
+    return new Promise((res, rej) => {
+      const s = tx("photos", "readwrite");
+      let left = ids.length;
+      if (!left) return res();
+      ids.forEach((id) => {
+        const d = s.delete(id);
+        d.onsuccess = () => {
+          if (--left === 0) res();
+        };
+        d.onerror = () => rej(d.error);
+      });
+    });
+  }
+
+  // **删除整本相册（含所有照片 + 清理会话密钥）**
+  async function deleteAlbumDeep(name) {
+    // 删相册内所有照片
+    await new Promise((res, rej) => {
+      const s = tx("photos", "readwrite");
+      const idx = s.index("album");
+      const range = IDBKeyRange.only(name);
+      const req = idx.openCursor(range);
+      req.onsuccess = () => {
+        const cur = req.result;
+        if (cur) {
+          s.delete(cur.primaryKey);
+          cur.continue();
+        } else res();
+      };
+      req.onerror = () => rej(req.error);
+    });
+    // 删相册
+    await new Promise((res, rej) => {
+      const s = tx("albums", "readwrite");
+      const d = s.delete(name);
+      d.onsuccess = res;
+      d.onerror = () => rej(d.error);
+    });
+    sessionKeys.delete(name);
+  }
+
+  // ========= UI：训练笔记 =========
   const noteCard = h(
     "div",
     { class: "card" },
@@ -387,17 +372,14 @@
           id: "session",
           placeholder: "本次训练主题（如：胸 + 三头）",
         }),
-        (() => {
-          const sel = h(
-            "select",
-            { class: "select", id: "rating", title: "主观强度 RPE" },
-            h("option", { value: "" }, "强度（RPE）"),
-            ...Array.from({ length: 10 }, (_, i) =>
-              h("option", { value: String(i + 1) }, String(i + 1))
-            )
-          );
-          return sel;
-        })()
+        h(
+          "select",
+          { class: "select", id: "rating", title: "主观强度 RPE" },
+          h("option", { value: "" }, "强度（RPE）"),
+          ...Array.from({ length: 10 }, (_, i) =>
+            h("option", { value: String(i + 1) }, String(i + 1))
+          )
+        )
       ),
       h(
         "div",
@@ -405,8 +387,7 @@
         h("textarea", {
           class: "textarea",
           id: "exercises",
-          placeholder:
-            "动作清单（每行一个：动作 | 组数x次数 | 重量）\n例：卧推 | 4x6 | 60kg",
+          placeholder: "动作清单（每行一个：动作 | 组数x次数 | 重量）\n例：卧推 | 4x6 | 60kg",
         })
       ),
       h(
@@ -421,19 +402,87 @@
       h(
         "div",
         { class: "row" },
-        h(
-          "button",
-          { class: "btn btn-accent", id: "saveLog" },
-          "保存记录"
-        ),
-        h("button", { class: "btn", id: "exportLogs" }, "导出 JSON")
+        h("button", { class: "btn btn-accent", id: "saveLog" }, "保存记录"),
+        h("button", { class: "btn btn-ghost", id: "exportLogs" }, "导出 JSON")
       ),
       h("div", { class: "sep" }),
       h("div", { class: "list", id: "logList" }, h("div", { class: "helper" }, "暂无记录"))
     )
   );
 
-  // === 右：相册（可加密） ===
+  function renderLogs(items) {
+    const box = root.getElementById("logList");
+    box.innerHTML = "";
+    if (!items.length) {
+      box.append(h("div", { class: "helper" }, "暂无记录"));
+      return;
+    }
+    items.forEach((it) => {
+      const head = `${it.date || ""} · ${it.session || "未命名"} · RPE ${
+        it.rating || "-"
+      }`;
+      const ex = (it.exercises || "")
+        .split(/\n+/)
+        .filter(Boolean)
+        .map((line) => `• ${line}`)
+        .join("\n");
+      const el = h(
+        "div",
+        { class: "log-item" },
+        h("div", { class: "flex" }, h("h4", {}, head), h("span", { class: "right helper" }, `#${it.id}`)),
+        h("pre", { class: "helper", style: "white-space:pre-wrap; margin:6px 0" }, ex),
+        h("div", { class: "helper", style: "white-space:pre-wrap" }, it.notes || ""),
+        h(
+          "div",
+          { class: "row", style: "margin-top:8px" },
+          h(
+            "button",
+            {
+              class: "btn btn-danger",
+              onclick: async () => {
+                await delLog(it.id);
+                loadLogs();
+              },
+            },
+            "删除"
+          )
+        )
+      );
+      box.append(el);
+    });
+  }
+  async function loadLogs() {
+    renderLogs(await listLogs());
+  }
+  async function onSaveLog() {
+    const v = (id) => root.getElementById(id).value.trim();
+    const log = {
+      date: v("date") || new Date().toISOString().slice(0, 10),
+      session: v("session"),
+      rating: v("rating"),
+      exercises: v("exercises"),
+      notes: v("notes"),
+      ts: Date.now(),
+    };
+    await addLog(log);
+    loadLogs();
+    ["session", "rating", "exercises", "notes"].forEach((id) => (root.getElementById(id).value = ""));
+  }
+  async function onExportLogs() {
+    const data = await listLogs();
+    const blob = new Blob(
+      [JSON.stringify({ type: "fitknow-logs", version: 1, data }, null, 2)],
+      { type: "application/json" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = h("a", { href: url, download: "fitknow-logs.json" });
+    root.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ========= UI：相册 =========
   const albumCard = h(
     "div",
     { class: "card" },
@@ -470,89 +519,15 @@
     )
   );
 
-  const grid = h("div", { class: "grid" }, noteCard, albumCard);
-  app.append(tabs, grid);
-  root.append(app);
-
-  // ========== 渲染：训练笔记 ==========
-  function renderLogs(items) {
-    const box = root.getElementById("logList");
-    box.innerHTML = "";
-    if (!items.length) {
-      box.append(h("div", { class: "helper" }, "暂无记录"));
-      return;
-    }
-    items.forEach((it) => {
-      const head = `${it.date || ""} · ${it.session || "未命名"} · RPE ${
-        it.rating || "-"
-      }`;
-      const ex = (it.exercises || "")
-        .split(/\n+/)
-        .filter(Boolean)
-        .map((line) => `• ${line}`)
-        .join("\n");
-      const el = h(
-        "div",
-        { class: "log-item" },
-        h(
-          "div",
-          { class: "flex" },
-          h("h4", {}, head),
-          h("span", { class: "right helper" }, `#${it.id}`)
-        ),
-        h("pre", { class: "helper", style: "white-space:pre-wrap; margin:6px 0" }, ex),
-        h("div", { class: "helper", style: "white-space:pre-wrap" }, it.notes || ""),
-        h(
-          "div",
-          { class: "row", style: "margin-top:8px" },
-          h(
-            "button",
-            {
-              class: "btn btn-danger",
-              onclick: async () => {
-                await delLog(it.id);
-                loadLogs();
-              },
-            },
-            "删除"
-          )
-        )
-      );
-      box.append(el);
-    });
+  function fmtTime(t) {
+    if (!t) return "";
+    const d = new Date(t);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(
+      d.getHours()
+    )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
-  const loadLogs = async () => renderLogs(await listLogs());
-  root.getElementById("saveLog").onclick = async () => {
-    const v = (id) => root.getElementById(id).value.trim();
-    const log = {
-      date: v("date") || new Date().toISOString().slice(0, 10),
-      session: v("session"),
-      rating: v("rating"),
-      exercises: v("exercises"),
-      notes: v("notes"),
-      ts: Date.now(),
-    };
-    await addLog(log);
-    ["session", "rating", "exercises", "notes"].forEach(
-      (id) => (root.getElementById(id).value = "")
-    );
-    loadLogs();
-  };
-  root.getElementById("exportLogs").onclick = async () => {
-    const data = await listLogs();
-    const blob = new Blob(
-      [JSON.stringify({ type: "fitknow-logs", version: 1, data }, null, 2)],
-      { type: "application/json" }
-    );
-    const url = URL.createObjectURL(blob);
-    const a = h("a", { href: url, download: `fit-logs-${Date.now()}.json` });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  };
 
-  // ========== 渲染：相册列表 ==========
   async function renderAlbums() {
     const box = root.getElementById("albumList");
     box.innerHTML = "";
@@ -578,11 +553,21 @@
             h("span", { class: "helper" }, fmtTime(a.updatedAt || a.createdAt)),
             h(
               "button",
-              {
-                class: "btn btn-accent right",
-                onclick: () => openAlbumManager(a.name),
-              },
+              { class: "btn btn-accent right", onclick: () => openAlbumManager(a.name) },
               "打开"
+            ),
+            h(
+              "button",
+              {
+                class: "btn btn-danger",
+                onclick: async () => {
+                  const ok = confirm(`确定删除相册「${a.name}」以及其中所有照片？此操作不可恢复！`);
+                  if (!ok) return;
+                  await deleteAlbumDeep(a.name);
+                  await renderAlbums();
+                },
+              },
+              "删除相册"
             )
           )
         )
@@ -591,303 +576,325 @@
     });
   }
 
-  // ========== 相册创建/更新 ==========
-  root.getElementById("createAlbum").onclick = async () => {
-    const name = root.getElementById("albumName").value.trim();
-    const pwd = root.getElementById("albumPassword").value;
-    if (!name) {
-      alert("请填写相册名称");
-      return;
-    }
-
-    let album = await getAlbum(name);
-    const now = Date.now();
-
-    if (pwd) {
-      // 加密相册：生成或沿用 salt/verifier
-      const salt = album?.salt || buf2b64(crypto.getRandomValues(new Uint8Array(16)));
-      const verifier = await hashVerifier(salt, pwd);
-      album = {
-        name,
-        locked: true,
-        salt,
-        verifier,
-        createdAt: album?.createdAt || now,
-        updatedAt: now,
-      };
-      // 更新会话密钥
-      const key = await deriveKeyPBKDF2(pwd, salt);
-      sessionKeys.set(name, key);
-    } else {
-      // 公开相册
-      album = {
-        name,
-        locked: false,
-        salt: undefined,
-        verifier: undefined,
-        createdAt: album?.createdAt || now,
-        updatedAt: now,
-      };
-      sessionKeys.delete(name);
-    }
-
-    await upsertAlbum(album);
-    root.getElementById("albumName").value = "";
-    root.getElementById("albumPassword").value = "";
-    renderAlbums();
-  };
-
-  // ========== 相册管理界面 ==========
-  async function openAlbumManager(albumName) {
-    const album = await getAlbum(albumName);
+  // 打开/管理相册
+  async function openAlbumManager(name) {
+    const album = await getAlbum(name);
     if (!album) {
       alert("相册不存在");
       return;
     }
-    // 权限检查
-    const ok = await ensureAlbumAccess(album);
-    if (!ok) return;
 
-    // 弹出层内容
-    const box = h("div", { class: "card" });
-    const body = h("div", { class: "body" });
-    box.append(
-      h(
-        "div",
-        { class: "card-hd" },
-        h("div", { class: "title" }, `相册：${album.name}`),
-        h(
-          "div",
-          { class: "muted" },
-          album.locked ? "已加密" : "公开"
-        )
-      ),
-      body
-    );
-
-    // 工具条
-    const toolbar = h("div", { class: "toolbar" });
-    const backBtn = h(
-      "button",
-      { class: "btn", onclick: () => renderAlbums() },
-      "← 返回"
-    );
-
-    const uploadInput = h("input", { type: "file", accept: "image/*", multiple: true, style: "display:none" });
-    const uploadBtn = h("button", { class: "btn btn-accent" }, "上传照片");
-    uploadBtn.onclick = () => uploadInput.click();
-
-    const chooseBtn = h("button", { class: "btn" }, "选择照片");
-    const selectAllBtn = h("button", { class: "btn" }, "全选/取消全选");
-
-    const toggleTrashBtn = h("button", { class: "btn" }, "查看回收站");
-    const removeBtn = h("button", { class: "btn btn-danger" }, "批量删除");
-    const restoreBtn = h("button", { class: "btn" }, "恢复所选");
-    const purgeBtn = h("button", { class: "btn btn-danger" }, "彻底删除（回收站）");
-
-    toolbar.append(backBtn, uploadBtn, chooseBtn, selectAllBtn, h("span", { class: "spacer" }), toggleTrashBtn, removeBtn, restoreBtn, purgeBtn, uploadInput);
-    body.append(toolbar);
-
-    const gridWrap = h("div", { class: "album-grid" });
-    body.append(gridWrap);
-
-    // 状态
-    const state = {
-      viewingTrash: false,
-      selecting: false,
-      selected: new Set(), // photo id
-      photos: [],
-    };
-
-    // 行为：装载/渲染
-    async function loadPhotos() {
-      state.photos = await getPhotosByAlbum(album.name, state.viewingTrash);
-      renderPhotos();
-    }
-
-    function renderPhotos() {
-      gridWrap.innerHTML = "";
-      if (!state.photos.length) {
-        gridWrap.append(
-          h(
-            "div",
-            { class: "helper", style: "grid-column: 1/-1; padding:12px;" },
-            state.viewingTrash ? "回收站为空" : "暂无照片，点击上方“上传照片”添加"
-          )
-        );
-        return;
-      }
-
-      state.photos.forEach((p) => {
-        const checked = state.selected.has(p.id);
-        const card = h("div", { class: "thumb" });
-        const img = h("img", { alt: p.name || "" });
-        const meta = h(
-          "div",
-          { class: "meta" },
-          h("input", {
-            type: "checkbox",
-            checked,
-            onchange: (e) => {
-              if (e.target.checked) state.selected.add(p.id);
-              else state.selected.delete(p.id);
-            },
-          }),
-          h("div", { class: "small helper" }, fmtTime(p.createdAt || Date.now()))
-        );
-        card.append(img, meta);
-        gridWrap.append(card);
-
-        // 展示缩略图（加密需要解密）
-        (async () => {
-          try {
-            let blob = p.blob;
-            if (p.enc) {
-              const key = sessionKeys.get(album.name);
-              if (!key) throw new Error("缺少解密会话，请重新打开相册");
-              blob = await decryptPhoto(key, p.iv, p.blob);
-            }
-            const url = URL.createObjectURL(blob);
-            img.src = url;
-            img.onload = () => URL.revokeObjectURL(url);
-          } catch (err) {
-            img.alt = "[无法解密]";
-          }
-        })();
-      });
-    }
-
-    // 事件：上传
-    uploadInput.onchange = async () => {
-      const files = Array.from(uploadInput.files || []);
-      if (!files.length) return;
-      let key = null;
-      if (album.locked) {
-        key = sessionKeys.get(album.name);
-        if (!key) {
-          alert("缺少解密会话，请关闭并重新打开相册");
-          return;
-        }
-      }
-      for (const f of files) {
+    let key = sessionKeys.get(name);
+    if (album.locked) {
+      // 验证密码（解 verify）
+      while (!key) {
+        const pwd = prompt(`相册「${name}」已加密，请输入密码解锁：`);
+        if (pwd == null) return; // 取消
         try {
-          if (album.locked) {
-            const { iv, blob } = await encryptForAlbum(key, f);
-            await addPhoto({
-              album: album.name,
-              name: f.name,
-              type: f.type,
-              size: f.size,
-              enc: true,
-              iv,
-              blob,
-            });
+          const k = await pbkdf2KeyFromPassword(pwd, album.salt);
+          const dec = await decryptBytes(album.verify, k);
+          if (textDec.decode(dec) === "FITOK") {
+            key = k;
+            sessionKeys.set(name, key); // 会话缓存
           } else {
-            await addPhoto({
-              album: album.name,
-              name: f.name,
-              type: f.type,
-              size: f.size,
-              enc: false,
-              blob: f,
-            });
+            alert("密码不正确");
           }
         } catch (e) {
-          console.error("上传失败：", e);
+          alert("密码不正确");
         }
       }
-      await upsertAlbum({ ...album, updatedAt: Date.now() });
-      await loadPhotos();
-      renderAlbums(); // 刷新外层列表时间
-      uploadInput.value = "";
-    };
+    }
 
-    // 事件：选择模式
-    let forceSelecting = false;
-    chooseBtn.onclick = () => {
-      forceSelecting = !forceSelecting;
-      state.selecting = forceSelecting;
-      if (!state.selecting) state.selected.clear();
-      chooseBtn.textContent = state.selecting ? "退出选择" : "选择照片";
-    };
-    selectAllBtn.onclick = () => {
-      if (!state.photos.length) return;
-      const allSelected = state.photos.every((p) => state.selected.has(p.id));
-      if (allSelected) state.selected.clear();
-      else state.photos.forEach((p) => state.selected.add(p.id));
-      renderPhotos();
-    };
-
-    // 事件：回收站切换与删除/恢复
-    toggleTrashBtn.onclick = async () => {
-      state.viewingTrash = !state.viewingTrash;
-      state.selected.clear();
-      toggleTrashBtn.textContent = state.viewingTrash ? "返回相册" : "查看回收站";
-      removeBtn.textContent = state.viewingTrash ? "批量删除（回收站）" : "批量删除";
-      await loadPhotos();
-    };
-    removeBtn.onclick = async () => {
-      const ids = [...state.selected];
-      if (!ids.length) {
-        alert("请先选择照片");
-        return;
-      }
-      if (!state.viewingTrash) {
-        await markDeleted(ids, true);
-      } else {
-        // 回收站中点击“批量删除”也按软删除逻辑（保持一致），真正清空用“彻底删除”
-        await markDeleted(ids, true);
-      }
-      state.selected.clear();
-      await loadPhotos();
-    };
-    restoreBtn.onclick = async () => {
-      const ids = [...state.selected];
-      if (!ids.length) {
-        alert("请先选择照片");
-        return;
-      }
-      await markDeleted(ids, false);
-      state.selected.clear();
-      await loadPhotos();
-    };
-    purgeBtn.onclick = async () => {
-      const ids = [...state.selected];
-      if (!ids.length) {
-        alert("请先选择照片");
-        return;
-      }
-      if (!state.viewingTrash) {
-        alert("请先切换到回收站再进行彻底删除");
-        return;
-      }
-      if (!confirm("确定要彻底删除所选照片吗？此操作不可恢复！")) return;
-      await purgePhotos(ids);
-      state.selected.clear();
-      await loadPhotos();
-    };
-
-    // 将管理界面替换相册列表
     const listBox = root.getElementById("albumList");
     listBox.innerHTML = "";
-    listBox.append(box);
-    await loadPhotos();
+
+    // 工具栏
+    const toolbar = h("div", { class: "toolbar" });
+    const backBtn = h("button", { class: "btn", onclick: renderAlbums }, "← 返回");
+
+    const fileInput = h("input", {
+      type: "file",
+      accept: "image/*",
+      multiple: true,
+      style: "display:none",
+    });
+
+    const uploadBtn = h(
+      "button",
+      {
+        class: "btn btn-accent",
+        onclick: () => fileInput.click(),
+      },
+      "上传照片"
+    );
+
+    const chooseBtn = h(
+      "button",
+      {
+        class: "btn",
+        onclick: () => fileInput.click(),
+      },
+      "选择照片"
+    );
+
+    const selectAllBtn = h(
+      "button",
+      {
+        class: "btn",
+        onclick: () => {
+          const boxes = listBox.querySelectorAll('input[type="checkbox"].pick');
+          const allChecked = Array.from(boxes).every((b) => b.checked);
+          boxes.forEach((b) => (b.checked = !allChecked));
+        },
+      },
+      "全选/取消全选"
+    );
+
+    let viewingTrash = false;
+    const toggleTrashBtn = h(
+      "button",
+      {
+        class: "btn",
+        onclick: async () => {
+          viewingTrash = !viewingTrash;
+          toggleTrashBtn.textContent = viewingTrash ? "查看回收站（已在）" : "查看回收站";
+          await renderPhotos();
+        },
+      },
+      "查看回收站"
+    );
+
+    const removeBtn = h(
+      "button",
+      {
+        class: "btn btn-danger",
+        onclick: async () => {
+          const ids = getPickedIds();
+          if (!ids.length) {
+            alert("先选择要删除的照片");
+            return;
+          }
+          await markTrash(ids, true);
+          await renderPhotos();
+        },
+      },
+      "批量删除"
+    );
+
+    const restoreBtn = h(
+      "button",
+      {
+        class: "btn",
+        onclick: async () => {
+          const ids = getPickedIds();
+          if (!ids.length) {
+            alert("先选择要恢复的照片");
+            return;
+          }
+          await markTrash(ids, false);
+          await renderPhotos();
+        },
+      },
+      "恢复所选"
+    );
+
+    const purgeBtn = h(
+      "button",
+      {
+        class: "btn btn-danger",
+        onclick: async () => {
+          const ids = getPickedIds();
+          if (!ids.length) {
+            alert("先选择要彻底删除的照片");
+            return;
+          }
+          const ok = confirm("确定彻底删除所选照片？此操作不可恢复！");
+          if (!ok) return;
+          await deletePhotos(ids);
+          await renderPhotos();
+        },
+      },
+      "彻底删除（回收站）"
+    );
+
+    const deleteAlbumBtn = h(
+      "button",
+      {
+        class: "btn btn-danger",
+        onclick: async () => {
+          const ok = confirm(`确定删除相册「${name}」以及其中所有照片？此操作不可恢复！`);
+          if (!ok) return;
+          await deleteAlbumDeep(name);
+          await renderAlbums();
+        },
+      },
+      "删除相册"
+    );
+
+    toolbar.append(
+      backBtn,
+      uploadBtn,
+      chooseBtn,
+      selectAllBtn,
+      h("span", { class: "spacer" }),
+      toggleTrashBtn,
+      removeBtn,
+      restoreBtn,
+      purgeBtn,
+      deleteAlbumBtn,
+      fileInput
+    );
+
+    listBox.append(
+      h(
+        "div",
+        { class: "card" },
+        h(
+          "div",
+          { class: "body" },
+          h("div", { class: "flex" }, h("strong", {}, `相册：${name}`), h("span", { class: "right helper" }, album.locked ? "加密" : "公开")),
+          toolbar,
+          h("div", { id: "thumbs", class: "thumbs" })
+        )
+      )
+    );
+
+    // 选择集
+    function getPickedIds() {
+      return Array.from(listBox.querySelectorAll('input[type="checkbox"].pick:checked')).map((b) =>
+        Number(b.dataset.id)
+      );
+    }
+
+    // 渲染照片网格
+    async function renderPhotos() {
+      const grid = root.getElementById("thumbs");
+      grid.innerHTML = "";
+      const photos = await listPhotosByAlbum(name, viewingTrash);
+      if (!photos.length) {
+        grid.append(h("div", { class: "helper", style: "grid-column:1/-1" }, viewingTrash ? "回收站为空" : "尚无照片，点击“上传照片”添加"));
+        return;
+      }
+      for (const p of photos) {
+        let blobUrl = "";
+        try {
+          let bytes;
+          if (p.enc) {
+            if (!key) throw new Error("no key");
+            bytes = await decryptBytes({ iv: p.iv, data: p.data }, key);
+          } else {
+            bytes = base64ToBytes(p.data);
+          }
+          const blob = new Blob([bytes], { type: p.mime || "image/jpeg" });
+          blobUrl = URL.createObjectURL(blob);
+        } catch (e) {
+          // 解密失败或其他
+          const ph = h(
+            "div",
+            { class: "ph" },
+            h("input", { type: "checkbox", class: "pick", "data-id": String(p.id) }),
+            h("div", { class: "helper", style: "text-align:center;padding:8px" }, "无法预览")
+          );
+          if (!p.trash) {
+            ph.append(
+              h(
+                "span",
+                {
+                  class: "del",
+                  onclick: async () => {
+                    await markTrash([p.id], true);
+                    await renderPhotos();
+                  },
+                },
+                "删除"
+              )
+            );
+          }
+          grid.append(ph);
+          continue;
+        }
+
+        const ph = h(
+          "div",
+          { class: "ph" },
+          h("input", { type: "checkbox", class: "pick", "data-id": String(p.id) }),
+          h("img", { src: blobUrl, alt: p.name || "" })
+        );
+        if (!p.trash) {
+          ph.append(
+            h(
+              "span",
+              {
+                class: "del",
+                onclick: async () => {
+                  await markTrash([p.id], true);
+                  await renderPhotos();
+                },
+              },
+              "删除"
+            )
+          );
+        }
+        grid.append(ph);
+      }
+    }
+
+    // 处理上传
+    fileInput.onchange = async () => {
+      const files = Array.from(fileInput.files || []);
+      if (!files.length) return;
+      for (const f of files) {
+        const buf = new Uint8Array(await f.arrayBuffer());
+        let rec;
+        if (album.locked) {
+          // 加密存
+          const enc = await encryptBytes(buf, key);
+          rec = {
+            album: name,
+            name: f.name,
+            ts: Date.now(),
+            size: f.size,
+            mime: f.type || "image/jpeg",
+            enc: true,
+            iv: enc.iv,
+            data: enc.data,
+            trash: false,
+          };
+        } else {
+          // 明文存（base64）
+          rec = {
+            album: name,
+            name: f.name,
+            ts: Date.now(),
+            size: f.size,
+            mime: f.type || "image/jpeg",
+            enc: false,
+            data: bytesToBase64(buf),
+            trash: false,
+          };
+        }
+        await addPhotoRec(rec);
+      }
+      await renderPhotos();
+      fileInput.value = "";
+    };
+
+    await renderPhotos();
   }
 
-  // ========== 启动 ==========
-  openDB()
-    .then((db) => {
-      DB = db;
-      loadLogs();
-      renderAlbums();
-    })
-    .catch((err) => {
-      const errBox = h(
-        "div",
-        { class: "helper" },
-        "IndexedDB 初始化失败：",
-        String(err)
-      );
-      app.append(errBox);
-    });
+  // ========= App 结构 =========
+  const grid = h("div", { class: "grid" }, noteCard, albumCard);
+  app.append(tabs, grid);
+  root.append(style, app);
+
+  // ========= 事件绑定 =========
+  root.getElementById("createAlbum").onclick = createOrUpdateAlbumFromInputs;
+  root.getElementById("saveLog").onclick = onSaveLog;
+  root.getElementById("exportLogs").onclick = onExportLogs;
+
+  // ========= 启动 =========
+  openDB().then(() => {
+    loadLogs();
+    renderAlbums();
+  });
 })();
