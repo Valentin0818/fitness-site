@@ -174,23 +174,32 @@
       tx.onerror = () => rej(tx.error);
     });
   }
+
+  // ⭐ 修复后的 removeAlbum：确保在同一事务生命周期内完成“删照片 + 删相册”
   async function removeAlbum(id) {
-    // 同时删除其下所有照片
     const db = await openDB();
-    const tx = db.transaction(['albums', 'photos'], 'readwrite');
-    const pStore = tx.objectStore('photos');
+    const albumKey = Number(id);
 
-    const idx = pStore.index('albumId');
-    const cursorReq = idx.openCursor(IDBKeyRange.only(Number(id)));
-    cursorReq.onsuccess = (e) => {
-      const c = e.target.result;
-      if (c) { pStore.delete(c.primaryKey); c.continue(); }
-    };
-    await new Promise((res, rej) => { cursorReq.onerror = () => rej(cursorReq.error); cursorReq.onsuccess && tx.oncomplete === null && (tx.oncomplete = () => res()); });
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['photos', 'albums'], 'readwrite');
+      const photosStore = tx.objectStore('photos');
+      const idx = photosStore.index('albumId');
 
-    return new Promise((res, rej) => {
-      tx.objectStore('albums').delete(Number(id)).onsuccess = () => res();
-      tx.onerror = () => rej(tx.error);
+      // 逐条删除该相册下的照片
+      idx.openCursor(IDBKeyRange.only(albumKey)).onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) {
+          c.delete();   // 等价于 photosStore.delete(c.primaryKey)
+          c.continue();
+        } else {
+          // 游标结束后，在同一事务里删除相册记录
+          tx.objectStore('albums').delete(albumKey);
+        }
+      };
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('tx aborted'));
     });
   }
 
